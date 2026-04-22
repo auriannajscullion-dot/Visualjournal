@@ -276,10 +276,10 @@ function FloatingSparkles() {
   return (
     <div className="fixed inset-0 pointer-events-none z-0">
       {sparkles.map((s, i) => (
-        <div key={i} className="absolute text-white"
-          style={{ left: `${s.x}%`, top: `${s.y}%`, fontSize: s.size,
+        <div key={i} className="absolute"
+          style={{ left: `${s.x}%`, top: `${s.y}%`, fontSize: s.size, color: "#a78bfa",
             animation: `float ${6+s.delay}s ease-in-out infinite, pulse-glow ${3+s.delay}s ease-in-out infinite`,
-            animationDelay: `${s.delay}s`, opacity: 0.6, textShadow: "0 0 10px #fff, 0 0 20px #ff6ec7" }}>
+            animationDelay: `${s.delay}s`, opacity: 0.7, textShadow: "0 0 8px rgba(255,110,199,0.6), 0 0 16px rgba(167,139,250,0.5)" }}>
           {s.char}
         </div>
       ))}
@@ -292,7 +292,7 @@ function Header() {
     <div className="pt-10 pb-4 px-6 text-center">
       <div className="inline-flex items-center gap-2 mb-2">
         <div className="h-px w-6" style={{background: "linear-gradient(90deg, transparent, #ff6ec7)"}} />
-        <span className="text-white/80" style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.35em", textTransform: "uppercase"}}>
+        <span style={{color: "#4a2e7a", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.35em", textTransform: "uppercase"}}>
           ✦ artist of life ✦
         </span>
         <div className="h-px w-6" style={{background: "linear-gradient(270deg, transparent, #60e5ff)"}} />
@@ -300,7 +300,7 @@ function Header() {
       <h1 className="text-6xl font-bold iridescent-text tracking-tight" style={{fontFamily: "'Pacifico', cursive", lineHeight: 1}}>
         daydream
       </h1>
-      <p className="text-xs mt-2 text-white/60 italic" style={{fontFamily: "'Caveat', cursive", fontSize: "16px"}}>
+      <p className="text-xs mt-2 italic" style={{color: "#6b4aa8", fontFamily: "'Caveat', cursive", fontSize: "16px"}}>
         a private place for soft thoughts & loud colors
       </p>
     </div>
@@ -326,7 +326,7 @@ function FeedView({ entries, onOpen, filter, setFilter }) {
       <div className="pt-2">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-pulse" style={{boxShadow: "0 0 8px #ff6ec7"}} />
-          <span className="text-xs text-white/70" style={{fontFamily: "'VT323', monospace", fontSize: "14px", letterSpacing: "0.15em", textTransform: "uppercase"}}>
+          <span className="text-xs" style={{color: "#5b3a8a", fontFamily: "'VT323', monospace", fontSize: "14px", letterSpacing: "0.15em", textTransform: "uppercase"}}>
             your timeline · {filtered.length}{filter !== "all" ? `/${entries.length}` : ""} entries
           </span>
         </div>
@@ -352,7 +352,7 @@ function FeedView({ entries, onOpen, filter, setFilter }) {
 
       {filtered.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-white/50 italic" style={{fontFamily: "'Caveat', cursive", fontSize: "20px"}}>
+          <p className="italic" style={{color: "#7a5aa8", fontFamily: "'Caveat', cursive", fontSize: "20px"}}>
             ✦ no {filter} entries yet ✦
           </p>
         </div>
@@ -362,7 +362,7 @@ function FeedView({ entries, onOpen, filter, setFilter }) {
 
       {filtered.length > 0 && (
         <div className="text-center py-10">
-          <p className="text-white/50 italic text-sm" style={{fontFamily: "'Caveat', cursive", fontSize: "18px"}}>
+          <p className="italic text-sm" style={{color: "#7a5aa8", fontFamily: "'Caveat', cursive", fontSize: "18px"}}>
             ✦ you've reached the beginning ✦
           </p>
         </div>
@@ -498,7 +498,7 @@ function ScrapbookView({ entries, onOpen, onNewCompose }) {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Book className="w-3.5 h-3.5 text-pink-300" />
-          <span className="text-white/70" style={{fontFamily: "'VT323', monospace", fontSize: "14px", letterSpacing: "0.15em", textTransform: "uppercase"}}>
+          <span style={{color: "#5b3a8a", fontFamily: "'VT323', monospace", fontSize: "14px", letterSpacing: "0.15em", textTransform: "uppercase"}}>
             scrapbook · {entries.length} pages
           </span>
         </div>
@@ -506,10 +506,10 @@ function ScrapbookView({ entries, onOpen, onNewCompose }) {
 
       {entries.length === 0 ? (
         <div className="text-center py-16 px-6">
-          <p className="text-white/50 italic mb-3" style={{fontFamily: "'Caveat', cursive", fontSize: "24px"}}>
+          <p className="italic mb-3" style={{color: "#7a5aa8", fontFamily: "'Caveat', cursive", fontSize: "24px"}}>
             ✦ no pages yet ✦
           </p>
-          <p className="text-white/50 text-sm">tap the + button to start a new page</p>
+          <p className="text-sm" style={{color: "#7a5aa8"}}>tap the + button to start a new page</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">
@@ -581,7 +581,7 @@ function ScrapbookComposeMenu({ onClose, onPick }) {
         <div className="flex items-center justify-between mb-5">
           <h2 className="iridescent-text" style={{fontFamily: "'Pacifico', cursive", fontSize: "28px"}}>new page</h2>
           <button onClick={onClose} className="w-8 h-8 rounded-full glass-light flex items-center justify-center">
-            <X className="w-4 h-4 text-white" />
+            <X className="w-4 h-4" style={{color: "#3d1d6b"}} />
           </button>
         </div>
         <div className="space-y-3">
@@ -597,8 +597,8 @@ function ScrapbookComposeMenu({ onClose, onPick }) {
                     <Icon className="w-6 h-6" style={{color: opt.color}} />
                   </div>
                   <div>
-                    <p className="text-white font-semibold" style={{fontFamily: "'Pacifico', cursive", fontSize: "20px"}}>{opt.label}</p>
-                    <p className="text-xs text-white/60 mt-0.5">{opt.desc}</p>
+                    <p className="font-semibold" style={{color: "#3d1d6b", fontFamily: "'Pacifico', cursive", fontSize: "20px"}}>{opt.label}</p>
+                    <p className="text-xs mt-0.5" style={{color: "#6b4aa8"}}>{opt.desc}</p>
                   </div>
                 </div>
               </button>
@@ -644,7 +644,7 @@ function ComposePhotoModal({ onClose, onSave }) {
         <div className="flex items-center justify-between mb-4">
           <h2 className="iridescent-text" style={{fontFamily: "'Pacifico', cursive", fontSize: "28px"}}>new photo ✦</h2>
           <button onClick={onClose} className="w-8 h-8 rounded-full glass-light flex items-center justify-center">
-            <X className="w-4 h-4 text-white" />
+            <X className="w-4 h-4" style={{color: "#3d1d6b"}} />
           </button>
         </div>
         <button onClick={() => fileInputRef.current?.click()}
@@ -653,18 +653,18 @@ function ComposePhotoModal({ onClose, onSave }) {
           {image ? <img src={image} alt="" className="w-full h-full object-cover" /> : (
             <div className="text-center">
               <ImageIcon className="w-10 h-10 mx-auto mb-2 text-pink-300" />
-              <p className="text-white/80" style={{fontFamily: "'VT323', monospace", fontSize: "15px", letterSpacing: "0.1em"}}>▸ tap to add photo</p>
+              <p style={{color: "#4a2e7a", fontFamily: "'VT323', monospace", fontSize: "15px", letterSpacing: "0.1em"}}>▸ tap to add photo</p>
             </div>
           )}
         </button>
         <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
         <textarea value={caption} onChange={e => setCaption(e.target.value)}
           placeholder="what happened? what did you notice?"
-          className="w-full p-3 rounded-xl outline-none resize-none mb-3 text-white placeholder-white/40"
-          style={{background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", fontSize: 15}}
+          className="w-full p-3 rounded-xl outline-none resize-none mb-3 placeholder-[#7a5aa8]/50"
+          style={{color: "#2d1b4e", background: "rgba(255,255,255,0.5)", border: "1px solid rgba(167,139,250,0.35)", fontSize: 15}}
           rows={3} />
         <div className="mb-4">
-          <p className="mb-2 text-white/60" style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.1em", textTransform: "uppercase"}}>▸ mood</p>
+          <p className="mb-2" style={{color: "#6b4aa8", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.1em", textTransform: "uppercase"}}>▸ mood</p>
           <div className="flex flex-wrap gap-1.5">
             {STICKERS.slice(0, 14).map(s => (
               <button key={s} onClick={() => setMood(s)}
@@ -695,7 +695,7 @@ function ComposePhotoModal({ onClose, onSave }) {
 function CoverPicker({ coverPhoto, setCoverPhoto, availableImages, entryType, date }) {
   return (
     <div className="mb-4">
-      <p className="mb-2 text-white/60" style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.1em", textTransform: "uppercase"}}>
+      <p className="mb-2" style={{color: "#6b4aa8", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.1em", textTransform: "uppercase"}}>
         ▸ cover photo (shown on feed)
       </p>
       <div className="flex gap-2 overflow-x-auto pb-1" style={{scrollbarWidth: "none"}}>
@@ -727,7 +727,7 @@ function CoverPicker({ coverPhoto, setCoverPhoto, availableImages, entryType, da
         })}
       </div>
       {availableImages.length === 0 && (
-        <p className="text-xs text-white/40 italic mt-2">add photos inside and they'll show up here</p>
+        <p className="text-xs italic mt-2" style={{color: "#8a6aa8"}}>add photos inside and they'll show up here</p>
       )}
     </div>
   );
@@ -766,16 +766,16 @@ function CreateCollage({ onClose, onSave, photoImages }) {
         <div className="flex items-center justify-between mb-4">
           <h2 className="iridescent-text" style={{fontFamily: "'Pacifico', cursive", fontSize: "28px"}}>new collage ✦</h2>
           <button onClick={onClose} className="w-8 h-8 rounded-full glass-light flex items-center justify-center">
-            <X className="w-4 h-4 text-white" />
+            <X className="w-4 h-4" style={{color: "#3d1d6b"}} />
           </button>
         </div>
-        <p className="text-white/60 text-sm mb-4 italic" style={{fontFamily: "'Caveat', cursive", fontSize: "17px"}}>
+        <p className="text-sm mb-4 italic" style={{color: "#6b4aa8", fontFamily: "'Caveat', cursive", fontSize: "17px"}}>
           name your page, then we'll open the editor
         </p>
         <input value={title} onChange={e => setTitle(e.target.value)}
           placeholder="give it a title..."
-          className="w-full p-3 rounded-xl outline-none mb-4 text-white placeholder-white/40"
-          style={{background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", fontSize: 16}} />
+          className="w-full p-3 rounded-xl outline-none mb-4 placeholder-[#7a5aa8]/50"
+          style={{color: "#2d1b4e", background: "rgba(255,255,255,0.5)", border: "1px solid rgba(167,139,250,0.35)", fontSize: 16}} />
         <button onClick={save}
           className="w-full py-3 rounded-xl text-white iridescent"
           style={{boxShadow: "0 4px 20px rgba(255,110,199,0.5)"}}>
@@ -1018,14 +1018,14 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
         {/* Top bar */}
         <div className="flex items-center justify-between mb-4">
           <button onClick={onClose} className="w-9 h-9 rounded-full glass-light flex items-center justify-center">
-            <X className="w-4 h-4 text-white" />
+            <X className="w-4 h-4" style={{color: "#3d1d6b"}} />
           </button>
           <div className="flex-1 mx-3 text-center">
-            <p className="text-white/70 text-[11px]" style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>collage · {entry.date}</p>
-            <p className="text-white truncate" style={{fontFamily: "'Pacifico', cursive", fontSize: "18px"}}>{entry.title}</p>
+            <p className="text-[11px]" style={{color: "#5b3a8a", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>collage · {entry.date}</p>
+            <p className="truncate" style={{color: "#3d1d6b", fontFamily: "'Pacifico', cursive", fontSize: "18px"}}>{entry.title}</p>
           </div>
           <button onClick={() => setShowSettings(true)} className="w-9 h-9 rounded-full glass-light flex items-center justify-center">
-            <span className="text-white text-lg">⚙</span>
+            <span className="text-lg" style={{color: "#3d1d6b"}}>⚙</span>
           </button>
         </div>
 
@@ -1224,8 +1224,8 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
             onChange={(v) => onUpdate({ caption: v })}
             placeholder="caption (shown under the post on the feed)" rows={2} />
           <button onClick={handleExport} disabled={exportStatus === "busy"}
-            className="w-full py-3 rounded-xl text-white transition flex items-center justify-center gap-2"
-            style={{background: "rgba(255,255,255,0.08)", border: "1px solid rgba(96,229,255,0.4)"}}>
+            className="w-full py-3 rounded-xl transition flex items-center justify-center gap-2"
+            style={{color: "#3d1d6b", background: "rgba(255,255,255,0.45)", border: "1px solid rgba(96,229,255,0.6)"}}>
             <Download className="w-4 h-4" />
             {exportStatus === "busy" ? "exporting..." : exportStatus === "done" ? "saved ✦" : "export as PDF"}
           </button>
@@ -1411,7 +1411,7 @@ function CollageSettings({ entry, onUpdate, onDelete, onClose, availableImages }
         <div className="flex items-center justify-between mb-4">
           <h3 className="iridescent-text" style={{fontFamily: "'Pacifico', cursive", fontSize: "24px"}}>page settings</h3>
           <button onClick={onClose} className="w-8 h-8 rounded-full glass-light flex items-center justify-center">
-            <X className="w-4 h-4 text-white" />
+            <X className="w-4 h-4" style={{color: "#3d1d6b"}} />
           </button>
         </div>
         <NeonLabel>title</NeonLabel>
@@ -1501,9 +1501,9 @@ function JournalEditor({ entry, onClose, onSave, onDelete, photoImages }) {
       <div className="max-w-xl mx-auto w-full p-4 pb-12">
         <div className="flex items-center justify-between mb-4">
           <button onClick={onClose} className="w-9 h-9 rounded-full glass-light flex items-center justify-center">
-            <X className="w-4 h-4 text-white" />
+            <X className="w-4 h-4" style={{color: "#3d1d6b"}} />
           </button>
-          <p className="text-white/80" style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>
+          <p style={{color: "#4a2e7a", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>
             journal · {entry?.date || todayDate()}
           </p>
           <button onClick={save}
@@ -1593,7 +1593,7 @@ function JournalEditor({ entry, onClose, onSave, onDelete, photoImages }) {
 
           {/* Mood */}
           <div>
-            <p className="mb-2 text-white/60" style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.1em", textTransform: "uppercase"}}>▸ mood</p>
+            <p className="mb-2" style={{color: "#6b4aa8", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.1em", textTransform: "uppercase"}}>▸ mood</p>
             <div className="flex flex-wrap gap-1.5">
               {STICKERS.slice(0, 14).map(s => (
                 <button key={s} onClick={() => setMood(s)}
@@ -1609,8 +1609,8 @@ function JournalEditor({ entry, onClose, onSave, onDelete, photoImages }) {
 
           {!isNew && (
             <button onClick={handleExport} disabled={exportStatus === "busy"}
-              className="w-full py-3 rounded-xl text-white transition flex items-center justify-center gap-2"
-              style={{background: "rgba(255,255,255,0.08)", border: "1px solid rgba(96,229,255,0.4)"}}>
+              className="w-full py-3 rounded-xl transition flex items-center justify-center gap-2"
+              style={{color: "#3d1d6b", background: "rgba(255,255,255,0.45)", border: "1px solid rgba(96,229,255,0.6)"}}>
               <Download className="w-4 h-4" />
               {exportStatus === "busy" ? "exporting..." : exportStatus === "done" ? "saved ✦" : "export as PDF"}
             </button>
@@ -1678,9 +1678,9 @@ function CheckInFlow({ onClose, onSave, photoImages }) {
         <div className="max-w-md mx-auto p-5 min-h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <button onClick={onClose} className="w-9 h-9 rounded-full glass-light flex items-center justify-center">
-              <X className="w-4 h-4 text-white" />
+              <X className="w-4 h-4" style={{color: "#3d1d6b"}} />
             </button>
-            <span className="text-white/70" style={{fontFamily: "'VT323', monospace", fontSize: "14px", letterSpacing: "0.2em"}}>
+            <span style={{color: "#5b3a8a", fontFamily: "'VT323', monospace", fontSize: "14px", letterSpacing: "0.2em"}}>
               {current.tag}
             </span>
             <div className="w-9 h-9" />
@@ -1698,7 +1698,7 @@ function CheckInFlow({ onClose, onSave, photoImages }) {
           </div>
 
           <div className="text-center mb-6">
-            <p className="text-white/60 mb-1" style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.25em", textTransform: "uppercase"}}>
+            <p className="mb-1" style={{color: "#6b4aa8", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.25em", textTransform: "uppercase"}}>
               ✦ check-in ✦
             </p>
             <h2 className="iridescent-text" style={{fontFamily: "'Pacifico', cursive", fontSize: "36px", lineHeight: 1.1}}>
@@ -1720,7 +1720,8 @@ function CheckInFlow({ onClose, onSave, photoImages }) {
             style={{background: "linear-gradient(to top, rgba(167,139,250,0.55) 0%, rgba(167,139,250,0.25) 60%, transparent 100%)"}}>
             {step > 0 && (
               <button onClick={() => setStep(step - 1)}
-                className="px-5 py-3 rounded-xl text-white/80 text-sm glass-light flex items-center gap-1">
+                className="px-5 py-3 rounded-xl text-sm glass-light flex items-center gap-1"
+                style={{color: "#4a2e7a"}}>
                 <ChevronLeft className="w-4 h-4" /> back
               </button>
             )}
@@ -1748,26 +1749,26 @@ function CheckInFlow({ onClose, onSave, photoImages }) {
 function NeonTextarea({ value, onChange, placeholder, rows = 3 }) {
   return (
     <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-      className="w-full p-3 rounded-xl outline-none resize-none text-white placeholder-white/40"
-      style={{background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", fontSize: 14, lineHeight: 1.6}}
+      className="w-full p-3 rounded-xl outline-none resize-none placeholder-[#7a5aa8]/50"
+      style={{color: "#2d1b4e", background: "rgba(255,255,255,0.5)", border: "1px solid rgba(167,139,250,0.35)", fontSize: 14, lineHeight: 1.6}}
       rows={rows} />
   );
 }
 function NeonInput({ value, onChange, placeholder }) {
   return (
     <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-      className="w-full p-3 rounded-xl outline-none text-white placeholder-white/40"
-      style={{background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", fontSize: 14}} />
+      className="w-full p-3 rounded-xl outline-none placeholder-[#7a5aa8]/50"
+      style={{color: "#2d1b4e", background: "rgba(255,255,255,0.5)", border: "1px solid rgba(167,139,250,0.35)", fontSize: 14}} />
   );
 }
 function NeonLabel({ children }) {
-  return <p className="text-white/60 mb-2 mt-2" style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>▸ {children}</p>;
+  return <p className="mb-2 mt-2" style={{color: "#6b4aa8", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>▸ {children}</p>;
 }
 function StepLabel({ children }) {
-  return <p className="text-white/60 mb-2 mt-4" style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>▸ {children}</p>;
+  return <p className="mb-2 mt-4" style={{color: "#6b4aa8", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>▸ {children}</p>;
 }
 function StepHint({ children }) {
-  return <p className="text-white/70 italic text-center mb-5" style={{fontFamily: "'Caveat', cursive", fontSize: "18px", lineHeight: 1.3}}>{children}</p>;
+  return <p className="italic text-center mb-5" style={{color: "#5b3a8a", fontFamily: "'Caveat', cursive", fontSize: "18px", lineHeight: 1.3}}>{children}</p>;
 }
 
 function ScaleDots({ value, onChange }) {
@@ -1798,9 +1799,9 @@ function StepBody({ data, update }) {
   return (
     <div>
       <StepHint>how well did you take care of your body this week?</StepHint>
-      <p className="text-center text-xs text-white/50 mb-2">sleep · eating · movement · water · weed · evening routine</p>
+      <p className="text-center text-xs mb-2" style={{color: "#7a5aa8"}}>sleep · eating · movement · water · weed · evening routine</p>
       <ScaleDots value={data.bodyScore} onChange={v => update({bodyScore: v})} />
-      <div className="flex justify-between text-white/40 px-2 mb-4" style={{fontFamily: "'VT323', monospace", fontSize: "12px"}}>
+      <div className="flex justify-between px-2 mb-4" style={{color: "#8a6aa8", fontFamily: "'VT323', monospace", fontSize: "12px"}}>
         <span>rough week</span><span>thriving</span>
       </div>
       <StepLabel>notes (optional)</StepLabel>
@@ -1813,7 +1814,7 @@ function StepCareer({ data, update }) {
   return (
     <div>
       <StepHint>what did you do this week to build your practice?</StepHint>
-      <p className="text-center text-xs text-white/50 mb-4">clients · workshops · courses · marketing · showing up · delusional confidence</p>
+      <p className="text-center text-xs mb-4" style={{color: "#7a5aa8"}}>clients · workshops · courses · marketing · showing up · delusional confidence</p>
       <StepLabel>practice moves</StepLabel>
       <NeonTextarea value={data.career} onChange={v => update({career: v})}
         placeholder="even tiny things count. showed up? made one video?" rows={4} />
@@ -1827,9 +1828,9 @@ function StepMind({ data, update }) {
   return (
     <div>
       <StepHint>how was your brain — and did you give it what it needed?</StepHint>
-      <p className="text-center text-xs text-white/50 mb-2">therapy · meditation · journaling · rest · self-doubt levels</p>
+      <p className="text-center text-xs mb-2" style={{color: "#7a5aa8"}}>therapy · meditation · journaling · rest · self-doubt levels</p>
       <ScaleDots value={data.mindScore} onChange={v => update({mindScore: v})} />
-      <div className="flex justify-between text-white/40 px-2 mb-4" style={{fontFamily: "'VT323', monospace", fontSize: "12px"}}>
+      <div className="flex justify-between px-2 mb-4" style={{color: "#8a6aa8", fontFamily: "'VT323', monospace", fontSize: "12px"}}>
         <span>scattered & stressed</span><span>grounded & clear</span>
       </div>
       <StepLabel>notes (optional)</StepLabel>
@@ -1843,7 +1844,7 @@ function StepCreative({ data, update }) {
   return (
     <div>
       <StepHint>did your life have whimsy, art, or real connection?</StepHint>
-      <p className="text-center text-xs text-white/50 mb-4">check everything — small counts</p>
+      <p className="text-center text-xs mb-4" style={{color: "#7a5aa8"}}>check everything — small counts</p>
       <div className="grid grid-cols-1 gap-2">
         {WHIMSY_ITEMS.map(item => {
           const checked = data.whimsy.includes(item);
@@ -1860,7 +1861,7 @@ function StepCreative({ data, update }) {
                   border: checked ? "none" : "2px solid rgba(255,255,255,0.3)"}}>
                 {checked && <span className="text-white text-xs">✓</span>}
               </div>
-              <span className="text-sm text-white/90">{item}</span>
+              <span className="text-sm" style={{color: "#3d1d6b"}}>{item}</span>
             </button>
           );
         })}
@@ -1876,7 +1877,7 @@ function StepVibe({ data, update }) {
   return (
     <div>
       <StepHint>what words describe how this week felt?</StepHint>
-      <p className="text-center text-xs text-white/50 mb-4">pick as many as feel true</p>
+      <p className="text-center text-xs mb-4" style={{color: "#7a5aa8"}}>pick as many as feel true</p>
       <div className="flex flex-wrap gap-2 justify-center">
         {MOODS.map(m => {
           const selected = data.moods.includes(m);
@@ -1884,9 +1885,9 @@ function StepVibe({ data, update }) {
             <button key={m} onClick={() => toggleMood(m)}
               className="px-3.5 py-1.5 rounded-full text-sm transition"
               style={{
-                background: selected ? "linear-gradient(110deg, rgba(255,110,199,0.3), rgba(96,229,255,0.3))" : "transparent",
-                border: `1.5px solid ${selected ? "rgba(255,110,199,0.6)" : "rgba(255,255,255,0.2)"}`,
-                color: selected ? "white" : "rgba(255,255,255,0.6)",
+                background: selected ? "linear-gradient(110deg, rgba(255,110,199,0.55), rgba(96,229,255,0.5))" : "rgba(255,255,255,0.4)",
+                border: `1.5px solid ${selected ? "rgba(255,110,199,0.75)" : "rgba(167,139,250,0.35)"}`,
+                color: selected ? "#3d1d6b" : "#6b4aa8",
                 boxShadow: selected ? "0 0 12px rgba(255,110,199,0.4)" : "none",
               }}>{m}</button>
           );
@@ -1905,7 +1906,7 @@ function StepArtistOfLife({ data, update }) {
   return (
     <div>
       <StepHint>one thing to carry forward — and one thing you're releasing</StepHint>
-      <p className="text-center text-xs text-white/50 mb-4">this is the most important one. be honest.</p>
+      <p className="text-center text-xs mb-4" style={{color: "#7a5aa8"}}>this is the most important one. be honest.</p>
       <StepLabel>✦ carrying forward</StepLabel>
       <NeonTextarea value={data.carry} onChange={v => update({carry: v})} placeholder="i'm carrying forward..." />
       <StepLabel>✦ releasing</StepLabel>
@@ -1928,7 +1929,7 @@ function StepPhotos({ data, update, photoImages }) {
   return (
     <div>
       <StepHint>any photos from this week to tuck into this check-in?</StepHint>
-      <p className="text-center text-xs text-white/50 mb-4">optional. pick from album or upload new.</p>
+      <p className="text-center text-xs mb-4" style={{color: "#7a5aa8"}}>optional. pick from album or upload new.</p>
 
       {data.images.length > 0 && (
         <div className="grid grid-cols-3 gap-2 mb-4">
@@ -1946,8 +1947,8 @@ function StepPhotos({ data, update, photoImages }) {
 
       <div className="flex gap-2 mb-4">
         <button onClick={() => fileRef.current?.click()}
-          className="flex-1 py-2.5 rounded-xl text-sm text-white flex items-center justify-center gap-1.5"
-          style={{background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)"}}>
+          className="flex-1 py-2.5 rounded-xl text-sm flex items-center justify-center gap-1.5"
+          style={{color: "#3d1d6b", background: "rgba(255,255,255,0.55)", border: "1px solid rgba(167,139,250,0.4)"}}>
           <Plus className="w-4 h-4" /> upload
         </button>
       </div>
@@ -1987,7 +1988,7 @@ function EntryViewer({ entry, onClose, onDelete, onEdit }) {
       style={{background: "linear-gradient(160deg, rgba(247,214,255,0.9) 0%, rgba(197,179,255,0.88) 35%, rgba(255,180,222,0.88) 65%, rgba(167,230,255,0.9) 100%)"}} onClick={onClose}>
       <div className="relative max-w-md w-full my-4" onClick={e => e.stopPropagation()}>
         <button onClick={onClose} className="absolute -top-2 right-0 w-9 h-9 rounded-full glass-light flex items-center justify-center z-10">
-          <X className="w-4 h-4 text-white" />
+          <X className="w-4 h-4" style={{color: "#3d1d6b"}} />
         </button>
         <div className="rounded-3xl overflow-hidden mt-6" style={{boxShadow: "0 30px 80px rgba(255,110,199,0.4)"}}>
           {entry.type === "photo" && <PhotoView entry={entry} onDelete={onDelete} />}
