@@ -54,7 +54,16 @@ const SAMPLE_COLLAGE = {
 const SAMPLE_ENTRIES = [SAMPLE_PHOTO, SAMPLE_COLLAGE];
 
 const STICKERS = ["✨","💖","🌸","🦋","🌙","⭐","💫","🫧","💗","🌿","🍄","👁️","🔮","🪩","☁️","🌈","⚡","🎀","💜","🪐","🫐","🌷","🍡","💅"];
-const PEN_COLORS = ["#FF6EC7","#A78BFA","#60E5FF","#FFD166","#B8FF6B","#FF8FC4","#FFFFFF","#1a0b2e"];
+const PEN_COLORS = ["#FF6EC7","#FF8FC4","#D49BFF","#A78BFA","#8FA5FF","#60E5FF","#7DFFD4","#B8FF6B","#FFE27A","#FFD166","#FFA07A","#FFFFFF","#1a0b2e"];
+const BRUSH_TYPES = [
+  { id: "pen",         label: "pen",         icon: "✒︎", opacity: 1,    dash: null,        cap: "round",  join: "round",  sizeMul: 1,   glow: false },
+  { id: "marker",      label: "marker",      icon: "🖊",  opacity: 0.85, dash: null,        cap: "round",  join: "round",  sizeMul: 1.8, glow: false },
+  { id: "highlighter", label: "highlighter", icon: "🖍",  opacity: 0.35, dash: null,        cap: "butt",   join: "miter",  sizeMul: 3.2, glow: false },
+  { id: "crayon",      label: "crayon",      icon: "✏︎", opacity: 0.7,  dash: "0.8 0.4",   cap: "round",  join: "round",  sizeMul: 1.4, glow: false },
+  { id: "dotted",      label: "dotted",      icon: "•",  opacity: 0.9,  dash: "0.1 1.2",   cap: "round",  join: "round",  sizeMul: 1.2, glow: false },
+  { id: "glitter",     label: "glitter",     icon: "✦",  opacity: 0.95, dash: "1 2",       cap: "round",  join: "round",  sizeMul: 1.2, glow: true  },
+  { id: "neon",        label: "neon",        icon: "⚡", opacity: 1,    dash: null,        cap: "round",  join: "round",  sizeMul: 1,   glow: true  },
+];
 
 const MOODS = ["alive ✦","grounded","anxious","scattered","heavy","hopeful","tired","proud","meh","whimsical 🌀","creative","overwhelmed","connected","lonely","peaceful","restless"];
 
@@ -74,7 +83,7 @@ const PAGE_BGS = [
   "linear-gradient(135deg, #fff4e6 0%, #ffe6f5 100%)",
   "linear-gradient(135deg, #e6f9ff 0%, #f0e6ff 100%)",
   "linear-gradient(135deg, #ffe6f0 0%, #e6ffe8 100%)",
-  "linear-gradient(135deg, #1a0b2e 0%, #2d1b4e 100%)",
+  "linear-gradient(135deg, #4a2e7a 0%, #6b4aa8 100%)",
   "linear-gradient(135deg, #ffffff 0%, #ffe6f5 100%)",
 ];
 
@@ -151,7 +160,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen w-full relative overflow-hidden"
-      style={{ background: "linear-gradient(160deg, #1a0b2e 0%, #2d1b4e 30%, #ff6ec7 70%, #60e5ff 100%)", fontFamily: "'Space Grotesk', sans-serif" }}>
+      style={{ background: "linear-gradient(160deg, #f7d6ff 0%, #c5b3ff 25%, #ffb4de 55%, #a7e6ff 100%)", fontFamily: "'Space Grotesk', sans-serif" }}>
       <GlobalStyles />
       <AmbientBackground />
       <FloatingSparkles />
@@ -229,12 +238,12 @@ function GlobalStyles() {
       @keyframes shimmer { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
       @keyframes slidein { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
       @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
-      .iridescent { background: linear-gradient(110deg, #ff6ec7 0%, #a78bfa 25%, #60e5ff 50%, #b8ff6b 75%, #ff6ec7 100%); background-size: 200% 200%; animation: shimmer 8s linear infinite; }
-      .iridescent-text { background: linear-gradient(110deg, #ff6ec7, #a78bfa, #60e5ff, #ff6ec7); background-size: 200% 200%; animation: shimmer 5s linear infinite; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+      .iridescent { background: linear-gradient(110deg, #ff6ec7 0%, #ff8fc4 10%, #d49bff 22%, #a78bfa 34%, #8fa5ff 42%, #60e5ff 50%, #8fa5ff 58%, #a78bfa 66%, #d49bff 78%, #ff8fc4 90%, #ff6ec7 100%); background-size: 200% 100%; animation: shimmer 10s linear infinite; }
+      .iridescent-text { background: linear-gradient(110deg, #ff6ec7 0%, #ff8fc4 10%, #d49bff 22%, #a78bfa 34%, #8fa5ff 42%, #60e5ff 50%, #8fa5ff 58%, #a78bfa 66%, #d49bff 78%, #ff8fc4 90%, #ff6ec7 100%); background-size: 200% 100%; animation: shimmer 8s linear infinite; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
       .slide-in { animation: slidein 0.4s ease-out; }
       .fade-in { animation: fadein 0.3s ease-out; }
-      .glass { background: rgba(30, 15, 55, 0.75); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.15); }
-      .glass-light { background: rgba(255,255,255,0.08); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); }
+      .glass { background: rgba(90, 60, 140, 0.55); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.25); }
+      .glass-light { background: rgba(255,255,255,0.18); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.25); }
       ::-webkit-scrollbar { width: 6px; height: 6px; }
       ::-webkit-scrollbar-track { background: transparent; }
       ::-webkit-scrollbar-thumb { background: rgba(255,110,199,0.4); border-radius: 3px; }
@@ -561,10 +570,11 @@ function ScrapbookComposeMenu({ onClose, onPick }) {
     { id: "checkin-new", icon: ClipboardCheck, color: "#60E5FF", label: "weekly check-in", desc: "how are you really doing?" },
   ];
   return (
-    <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-md fade-in" onClick={onClose}>
+    <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center backdrop-blur-md fade-in"
+      style={{background: "rgba(60, 35, 110, 0.35)"}} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} className="w-full max-w-md p-6 slide-in"
         style={{
-          background: "linear-gradient(160deg, #2d1b4e 0%, #1a0b2e 100%)",
+          background: "linear-gradient(160deg, #f7d6ff 0%, #c5b3ff 50%, #ffb4de 100%)",
           borderRadius: "28px 28px 0 0", border: "1px solid rgba(255,255,255,0.15)",
           boxShadow: "0 -20px 60px rgba(255,110,199,0.3)",
         }}>
@@ -622,11 +632,12 @@ function ComposePhotoModal({ onClose, onSave }) {
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-md fade-in" onClick={onClose}>
+    <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center backdrop-blur-md fade-in"
+      style={{background: "rgba(60, 35, 110, 0.4)"}} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} className="w-full max-w-md p-5 slide-in"
         style={{
           maxHeight: "92vh", overflowY: "auto",
-          background: "linear-gradient(160deg, #2d1b4e 0%, #1a0b2e 100%)",
+          background: "linear-gradient(160deg, #f7d6ff 0%, #c5b3ff 50%, #ffb4de 100%)",
           borderRadius: "28px 28px 0 0", border: "1px solid rgba(255,255,255,0.15)",
           boxShadow: "0 -20px 60px rgba(255,110,199,0.3)",
         }}>
@@ -744,10 +755,11 @@ function CreateCollage({ onClose, onSave, photoImages }) {
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-md fade-in" onClick={onClose}>
+    <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center backdrop-blur-md fade-in"
+      style={{background: "rgba(60, 35, 110, 0.4)"}} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} className="w-full max-w-md p-5 slide-in"
         style={{
-          background: "linear-gradient(160deg, #2d1b4e 0%, #1a0b2e 100%)",
+          background: "linear-gradient(160deg, #f7d6ff 0%, #c5b3ff 50%, #ffb4de 100%)",
           borderRadius: "28px 28px 0 0", border: "1px solid rgba(255,255,255,0.15)",
           boxShadow: "0 -20px 60px rgba(255,110,199,0.3)",
         }}>
@@ -781,7 +793,10 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   const [tool, setTool] = useState(null);
   const [penColor, setPenColor] = useState(PEN_COLORS[0]);
   const [penSize, setPenSize] = useState(4);
+  const [brushType, setBrushType] = useState(BRUSH_TYPES[0].id);
   const [selectedId, setSelectedId] = useState(null);
+  // "move" | "resize" — how interactions on a selected item behave
+  const [itemMode, setItemMode] = useState("move");
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [showStickers, setShowStickers] = useState(false);
   const [addingText, setAddingText] = useState(false);
@@ -790,76 +805,194 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   const [exportStatus, setExportStatus] = useState(null); // null | "busy" | "done"
 
   const pageRef = useRef(null);
+  const fileInputRef = useRef(null);
   const drawingRef = useRef(false);
-  const currentStrokeRef = useRef(null);
+  const currentStrokeIdRef = useRef(null);
+  const rafPendingRef = useRef(false);
+  const pendingPointRef = useRef(null);
 
   // Working copy — avoid spamming onUpdate while drawing
   const [localItems, setLocalItems] = useState(entry.items || []);
   const [localStrokes, setLocalStrokes] = useState(entry.strokes || []);
   useEffect(() => { setLocalItems(entry.items || []); setLocalStrokes(entry.strokes || []); }, [entry.id]);
 
-  const flush = () => onUpdate({ items: localItems, strokes: localStrokes });
-  useEffect(() => { const t = setTimeout(flush, 300); return () => clearTimeout(t); }, [localItems, localStrokes]);
+  // Debounced flush to parent — kept in ref so latest values are always sent
+  const latestRef = useRef({ items: localItems, strokes: localStrokes });
+  latestRef.current = { items: localItems, strokes: localStrokes };
+  useEffect(() => {
+    const t = setTimeout(() => onUpdate(latestRef.current), 400);
+    return () => clearTimeout(t);
+  }, [localItems, localStrokes]);
 
-  const addItem = (item) => setLocalItems([...localItems, { id: uid(), ...item }]);
-  const updateItem = (id, updates) => setLocalItems(localItems.map(it => it.id === id ? { ...it, ...updates } : it));
-  const deleteItem = (id) => { setLocalItems(localItems.filter(it => it.id !== id)); setSelectedId(null); };
+  const addItem = (item) => setLocalItems(prev => [...prev, { id: uid(), ...item }]);
+  const updateItem = (id, updates) => setLocalItems(prev => prev.map(it => it.id === id ? { ...it, ...updates } : it));
+  const deleteItem = (id) => { setLocalItems(prev => prev.filter(it => it.id !== id)); setSelectedId(null); };
 
-  const getPoint = (e) => {
-    const rect = pageRef.current.getBoundingClientRect();
-    const t = e.touches ? e.touches[0] : e;
-    return { x: ((t.clientX - rect.left) / rect.width) * 100, y: ((t.clientY - rect.top) / rect.height) * 100 };
+  // Attach non-passive touch listeners so preventDefault actually works and avoids crashes
+  useEffect(() => {
+    const el = pageRef.current;
+    if (!el) return;
+    const block = (e) => { if (drawingRef.current) e.preventDefault(); };
+    el.addEventListener("touchstart", block, { passive: false });
+    el.addEventListener("touchmove", block, { passive: false });
+    return () => {
+      el.removeEventListener("touchstart", block);
+      el.removeEventListener("touchmove", block);
+    };
+  }, []);
+
+  const getPoint = (clientX, clientY) => {
+    const rect = pageRef.current?.getBoundingClientRect();
+    if (!rect || !rect.width || !rect.height) return null;
+    return {
+      x: ((clientX - rect.left) / rect.width) * 100,
+      y: ((clientY - rect.top) / rect.height) * 100,
+    };
   };
+  const getEventPoint = (e) => {
+    const t = e.touches && e.touches.length ? e.touches[0]
+            : e.changedTouches && e.changedTouches.length ? e.changedTouches[0]
+            : e;
+    if (t == null || typeof t.clientX !== "number") return null;
+    return getPoint(t.clientX, t.clientY);
+  };
+
   const startDraw = (e) => {
     if (!tool) return;
-    e.preventDefault();
+    const p = getEventPoint(e);
+    if (!p) return;
     drawingRef.current = true;
-    const p = getPoint(e);
     if (tool === "draw") {
-      currentStrokeRef.current = { id: uid(), color: penColor, size: penSize, points: [p] };
-      setLocalStrokes(prev => [...prev, currentStrokeRef.current]);
-    } else if (tool === "erase") eraseAt(p);
+      const id = uid();
+      currentStrokeIdRef.current = id;
+      setLocalStrokes(prev => [...prev, { id, color: penColor, size: penSize, brush: brushType, points: [p] }]);
+    } else if (tool === "erase") {
+      eraseAt(p);
+    }
   };
+
+  const flushPendingPoint = () => {
+    rafPendingRef.current = false;
+    const p = pendingPointRef.current;
+    if (!p) return;
+    pendingPointRef.current = null;
+    const id = currentStrokeIdRef.current;
+    if (!id) return;
+    setLocalStrokes(prev => prev.map(s => s.id === id ? { ...s, points: [...s.points, p] } : s));
+  };
+
   const moveDraw = (e) => {
-    if (!drawingRef.current) return;
-    e.preventDefault();
-    const p = getPoint(e);
-    if (tool === "draw" && currentStrokeRef.current) {
-      currentStrokeRef.current.points.push(p);
-      setLocalStrokes(prev => prev.map(s => s.id === currentStrokeRef.current.id ? {...currentStrokeRef.current} : s));
-    } else if (tool === "erase") eraseAt(p);
+    if (!drawingRef.current || !tool) return;
+    const p = getEventPoint(e);
+    if (!p) return;
+    if (tool === "draw") {
+      pendingPointRef.current = p;
+      if (!rafPendingRef.current) {
+        rafPendingRef.current = true;
+        requestAnimationFrame(flushPendingPoint);
+      }
+    } else if (tool === "erase") {
+      eraseAt(p);
+    }
   };
-  const endDraw = () => { drawingRef.current = false; currentStrokeRef.current = null; };
+
+  const endDraw = () => {
+    if (rafPendingRef.current && pendingPointRef.current) {
+      flushPendingPoint();
+    }
+    drawingRef.current = false;
+    currentStrokeIdRef.current = null;
+    pendingPointRef.current = null;
+    rafPendingRef.current = false;
+  };
+
   const eraseAt = (p) => {
     setLocalStrokes(prev => prev.filter(s => !s.points.some(pt => Math.hypot(pt.x - p.x, pt.y - p.y) < 5)));
   };
 
-  const onPointerDownItem = (e, item) => {
+  // Drag an item around (only when itemMode === "move" and item is the selected one)
+  const startMoveItem = (e, item) => {
     if (tool) return;
     e.stopPropagation();
-    setSelectedId(item.id);
-    const startX = e.touches ? e.touches[0].clientX : e.clientX;
-    const startY = e.touches ? e.touches[0].clientY : e.clientY;
+    const startX = e.touches ? e.touches[0]?.clientX : e.clientX;
+    const startY = e.touches ? e.touches[0]?.clientY : e.clientY;
+    if (startX == null || startY == null) return;
     const rect = pageRef.current.getBoundingClientRect();
     const startLeft = item.x, startTop = item.y;
-    let latest = {x: startLeft, y: startTop};
+    let moved = false;
     const onMove = (ev) => {
       const t = ev.touches ? ev.touches[0] : ev;
+      if (!t || typeof t.clientX !== "number") return;
+      if (ev.cancelable) ev.preventDefault?.();
       const dx = ((t.clientX - startX) / rect.width) * 100;
       const dy = ((t.clientY - startY) / rect.height) * 100;
-      latest = { x: Math.max(0, Math.min(95, startLeft + dx)), y: Math.max(0, Math.min(95, startTop + dy)) };
-      updateItem(item.id, latest);
+      if (Math.abs(dx) + Math.abs(dy) > 0.3) moved = true;
+      updateItem(item.id, {
+        x: Math.max(0, Math.min(95, startLeft + dx)),
+        y: Math.max(0, Math.min(95, startTop + dy)),
+      });
     };
     const onEnd = () => {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onEnd);
       window.removeEventListener("touchmove", onMove);
       window.removeEventListener("touchend", onEnd);
+      window.removeEventListener("touchcancel", onEnd);
     };
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onEnd);
     window.addEventListener("touchmove", onMove, { passive: false });
     window.addEventListener("touchend", onEnd);
+    window.addEventListener("touchcancel", onEnd);
+  };
+
+  // Pinch / drag from a corner to resize an image
+  const startResizeItem = (e, item) => {
+    if (tool) return;
+    e.stopPropagation();
+    const startX = e.touches ? e.touches[0]?.clientX : e.clientX;
+    const startY = e.touches ? e.touches[0]?.clientY : e.clientY;
+    if (startX == null || startY == null) return;
+    const rect = pageRef.current.getBoundingClientRect();
+    const startW = item.w || 35;
+    const startSize = item.size || 56;
+    const onMove = (ev) => {
+      const t = ev.touches ? ev.touches[0] : ev;
+      if (!t || typeof t.clientX !== "number") return;
+      if (ev.cancelable) ev.preventDefault?.();
+      const dx = ((t.clientX - startX) / rect.width) * 100;
+      const dy = ((t.clientY - startY) / rect.height) * 100;
+      const delta = (dx + dy) / 2;
+      if (item.type === "image") {
+        updateItem(item.id, { w: Math.max(12, Math.min(80, startW + delta * 1.2)) });
+      } else if (item.type === "sticker") {
+        updateItem(item.id, { size: Math.max(20, Math.min(180, startSize + delta * 2)) });
+      }
+    };
+    const onEnd = () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onEnd);
+      window.removeEventListener("touchmove", onMove);
+      window.removeEventListener("touchend", onEnd);
+      window.removeEventListener("touchcancel", onEnd);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onEnd);
+    window.addEventListener("touchmove", onMove, { passive: false });
+    window.addEventListener("touchend", onEnd);
+    window.addEventListener("touchcancel", onEnd);
+  };
+
+  const handleUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      addItem({ type: "image", src: ev.target.result, x: rand(15, 55), y: rand(20, 55), w: rand(32, 48), rotation: rand(-15, 15) });
+      setShowImagePicker(false);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
   };
 
   // Images used in this collage (for cover picker)
@@ -879,7 +1012,8 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-black/90 backdrop-blur-md fade-in overflow-y-auto">
+    <div className="fixed inset-0 z-40 flex flex-col backdrop-blur-md fade-in overflow-y-auto"
+      style={{background: "linear-gradient(160deg, rgba(247,214,255,0.96) 0%, rgba(197,179,255,0.95) 30%, rgba(255,180,222,0.94) 65%, rgba(167,230,255,0.96) 100%)"}}>
       <div className="max-w-xl mx-auto w-full p-4 pb-12">
         {/* Top bar */}
         <div className="flex items-center justify-between mb-4">
@@ -887,7 +1021,7 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
             <X className="w-4 h-4 text-white" />
           </button>
           <div className="flex-1 mx-3 text-center">
-            <p className="text-white/50 text-[11px]" style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>collage · {entry.date}</p>
+            <p className="text-white/70 text-[11px]" style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>collage · {entry.date}</p>
             <p className="text-white truncate" style={{fontFamily: "'Pacifico', cursive", fontSize: "18px"}}>{entry.title}</p>
           </div>
           <button onClick={() => setShowSettings(true)} className="w-9 h-9 rounded-full glass-light flex items-center justify-center">
@@ -900,7 +1034,7 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
           <div className="absolute -inset-1 rounded-[28px] iridescent opacity-80 blur-md" />
           <div ref={pageRef}
             onMouseDown={startDraw} onMouseMove={moveDraw} onMouseUp={endDraw} onMouseLeave={endDraw}
-            onTouchStart={startDraw} onTouchMove={moveDraw} onTouchEnd={endDraw}
+            onTouchStart={startDraw} onTouchMove={moveDraw} onTouchEnd={endDraw} onTouchCancel={endDraw}
             onClick={() => { if (!tool) setSelectedId(null); }}
             className="relative w-full rounded-[26px] overflow-hidden select-none"
             style={{
@@ -924,17 +1058,31 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
             {localItems.map(item => (
               <CollageItem key={item.id} item={item}
                 selected={selectedId === item.id}
-                onPointerDown={(e) => onPointerDownItem(e, item)}
+                itemMode={itemMode}
+                disabled={!!tool}
+                onSelect={() => { setSelectedId(item.id); setItemMode("move"); }}
+                onSetMode={(m) => setItemMode(m)}
+                onStartMove={(e) => startMoveItem(e, item)}
+                onStartResize={(e) => startResizeItem(e, item)}
                 onDelete={() => deleteItem(item.id)}
                 onUpdate={(u) => updateItem(item.id, u)} />
             ))}
 
             <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
-              {localStrokes.map(s => (
-                <polyline key={s.id} points={s.points.map(p => `${p.x},${p.y}`).join(" ")}
-                  fill="none" stroke={s.color} strokeLinecap="round" strokeLinejoin="round"
-                  vectorEffect="non-scaling-stroke" style={{strokeWidth: s.size}} />
-              ))}
+              {localStrokes.map(s => {
+                const b = BRUSH_TYPES.find(x => x.id === s.brush) || BRUSH_TYPES[0];
+                const w = (s.size || 4) * b.sizeMul;
+                return (
+                  <polyline key={s.id}
+                    points={(s.points || []).map(p => `${p.x},${p.y}`).join(" ")}
+                    fill="none" stroke={s.color}
+                    strokeLinecap={b.cap} strokeLinejoin={b.join}
+                    strokeDasharray={b.dash || undefined}
+                    opacity={b.opacity}
+                    vectorEffect="non-scaling-stroke"
+                    style={{strokeWidth: w, filter: b.glow ? `drop-shadow(0 0 4px ${s.color})` : undefined}} />
+                );
+              })}
             </svg>
 
             {localItems.length === 0 && localStrokes.length === 0 && (
@@ -957,35 +1105,63 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
           <ToolBtn active={showImagePicker} onClick={() => { setShowImagePicker(!showImagePicker); setShowStickers(false); setTool(null); }} icon={<ImageIcon className="w-4 h-4" />} label="photo" />
           <ToolBtn active={showStickers} onClick={() => { setShowStickers(!showStickers); setShowImagePicker(false); setTool(null); }} icon={<Sparkles className="w-4 h-4" />} label="sticker" />
           <ToolBtn active={addingText} onClick={() => { setAddingText(true); setTool(null); }} icon={<Type className="w-4 h-4" />} label="text" />
-          <ToolBtn active={tool === "draw"} onClick={() => setTool(tool === "draw" ? null : "draw")} icon={<Pencil className="w-4 h-4" />} label="draw" />
-          <ToolBtn active={tool === "erase"} onClick={() => setTool(tool === "erase" ? null : "erase")} icon={<Eraser className="w-4 h-4" />} label="erase" />
+          <ToolBtn active={tool === "draw"} onClick={() => { setTool(tool === "draw" ? null : "draw"); setSelectedId(null); }} icon={<Pencil className="w-4 h-4" />} label="draw" />
+          <ToolBtn active={tool === "erase"} onClick={() => { setTool(tool === "erase" ? null : "erase"); setSelectedId(null); }} icon={<Eraser className="w-4 h-4" />} label="erase" />
         </div>
 
         {tool === "draw" && (
-          <div className="mt-3 flex items-center gap-3 justify-center mx-auto w-fit slide-in p-3 rounded-2xl glass">
-            <div className="flex gap-1.5">
-              {PEN_COLORS.map(c => (
-                <button key={c} onClick={() => setPenColor(c)} className="w-7 h-7 rounded-full transition"
-                  style={{
-                    background: c,
-                    transform: penColor === c ? "scale(1.25)" : "scale(1)",
-                    boxShadow: penColor === c ? "0 0 0 2px rgba(30,15,55,0.9), 0 0 0 4px #fff, 0 0 12px " + c : "0 2px 4px rgba(0,0,0,0.3)",
-                  }} />
-              ))}
+          <div className="mt-3 flex flex-col items-center gap-2 slide-in p-3 rounded-2xl glass mx-auto w-fit max-w-full">
+            {/* Brush types */}
+            <div className="flex flex-wrap gap-1.5 justify-center">
+              {BRUSH_TYPES.map(b => {
+                const active = brushType === b.id;
+                return (
+                  <button key={b.id} onClick={() => setBrushType(b.id)}
+                    className="px-2.5 py-1 rounded-full text-xs transition flex items-center gap-1"
+                    style={{
+                      background: active ? "linear-gradient(110deg, #ff6ec7, #a78bfa)" : "rgba(255,255,255,0.14)",
+                      color: "white",
+                      border: active ? "1px solid rgba(255,255,255,0.45)" : "1px solid rgba(255,255,255,0.18)",
+                      boxShadow: active ? "0 4px 14px rgba(255,110,199,0.45)" : "none",
+                    }}>
+                    <span style={{fontSize: 14}}>{b.icon}</span>{b.label}
+                  </button>
+                );
+              })}
             </div>
-            <div className="w-px h-6 bg-white/20" />
-            <div className="flex items-center gap-2">
-              <input type="range" min="1" max="14" value={penSize} onChange={e => setPenSize(+e.target.value)} className="w-20 accent-pink-400" />
-              <div className="rounded-full" style={{width: Math.max(penSize*2, 6), height: Math.max(penSize*2, 6), background: penColor, boxShadow: `0 0 8px ${penColor}`}} />
+            <div className="flex items-center gap-3 flex-wrap justify-center">
+              <div className="flex flex-wrap gap-1.5 justify-center">
+                {PEN_COLORS.map(c => (
+                  <button key={c} onClick={() => setPenColor(c)} className="w-6 h-6 rounded-full transition"
+                    style={{
+                      background: c,
+                      transform: penColor === c ? "scale(1.3)" : "scale(1)",
+                      boxShadow: penColor === c ? "0 0 0 2px rgba(30,15,55,0.9), 0 0 0 4px #fff, 0 0 12px " + c : "0 2px 4px rgba(0,0,0,0.3)",
+                    }} />
+                ))}
+              </div>
+              <div className="w-px h-6 bg-white/20" />
+              <div className="flex items-center gap-2">
+                <input type="range" min="1" max="14" value={penSize} onChange={e => setPenSize(+e.target.value)} className="w-20 accent-pink-400" />
+                <div className="rounded-full" style={{width: Math.max(penSize*2, 6), height: Math.max(penSize*2, 6), background: penColor, boxShadow: `0 0 8px ${penColor}`}} />
+              </div>
             </div>
           </div>
         )}
 
         {showImagePicker && (
           <div className="mt-3 rounded-2xl p-3 slide-in glass">
-            <p className="mb-2 px-1 text-white/80" style={{fontFamily: "'VT323', monospace", fontSize: "14px", letterSpacing: "0.1em", textTransform: "uppercase"}}>▸ from your album:</p>
+            <div className="flex items-center gap-2 mb-3">
+              <button onClick={() => fileInputRef.current?.click()}
+                className="flex-1 py-2.5 rounded-xl text-sm text-white flex items-center justify-center gap-1.5 transition hover:scale-[1.02]"
+                style={{background: "linear-gradient(110deg, #ff6ec7, #a78bfa)", boxShadow: "0 4px 14px rgba(255,110,199,0.45)"}}>
+                <Plus className="w-4 h-4" /> upload new photo
+              </button>
+            </div>
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleUpload} className="hidden" />
+            <p className="mb-2 px-1 text-white/80" style={{fontFamily: "'VT323', monospace", fontSize: "14px", letterSpacing: "0.1em", textTransform: "uppercase"}}>▸ or pick from your album:</p>
             {photoImages.length === 0 ? (
-              <p className="text-xs text-white/50 italic p-3">no photos yet — add one from the feed's + button!</p>
+              <p className="text-xs text-white/60 italic p-3">no photos yet — upload or add one from the feed's + button!</p>
             ) : (
               <div className="grid grid-cols-4 gap-2">
                 {photoImages.map((src, i) => (
@@ -1069,49 +1245,141 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   );
 }
 
-function CollageItem({ item, selected, onPointerDown, onDelete, onUpdate }) {
+function CollageItem({ item, selected, itemMode, disabled, onSelect, onSetMode, onStartMove, onStartResize, onDelete, onUpdate }) {
+  const canResize = item.type === "image" || item.type === "sticker";
+  const activeMode = selected ? itemMode : null;
+
+  // When not selected: first tap selects (shows mode toolbar, no drag yet).
+  // When selected in "move" mode: pointer-down starts a move drag.
+  // When selected in "resize" mode: pointer-down on body does nothing; use corner handle to resize.
+  const handleBodyPointerDown = (e) => {
+    if (disabled) return;
+    if (!selected) {
+      e.stopPropagation();
+      onSelect();
+      return;
+    }
+    if (activeMode === "move") {
+      onStartMove(e);
+    } else {
+      // In resize mode, don't let pointer-down propagate (so page doesn't deselect)
+      e.stopPropagation();
+    }
+  };
+
   const style = {
     position: "absolute", left: `${item.x}%`, top: `${item.y}%`,
-    transform: `rotate(${item.rotation || 0}deg)`, cursor: "grab", touchAction: "none",
+    transform: `rotate(${item.rotation || 0}deg)`,
+    cursor: disabled ? "default" : (!selected ? "pointer" : activeMode === "move" ? "grab" : "default"),
+    touchAction: "none",
   };
   return (
-    <div onMouseDown={onPointerDown} onTouchStart={onPointerDown} style={style}>
+    <div onMouseDown={handleBodyPointerDown} onTouchStart={handleBodyPointerDown} style={style}>
       {selected && (
-        <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex gap-1 z-20">
-          <button onClick={e => { e.stopPropagation(); onUpdate({ rotation: (item.rotation || 0) - 10 }); }}
-            className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-white"
-            style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>↺</button>
-          <button onClick={e => { e.stopPropagation(); onUpdate({ rotation: (item.rotation || 0) + 10 }); }}
-            className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-white"
-            style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>↻</button>
-          {item.type === "image" && (
-            <>
-              <button onClick={e => { e.stopPropagation(); onUpdate({ w: Math.max(15, (item.w || 35) - 5) }); }}
-                className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-white"
-                style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>−</button>
-              <button onClick={e => { e.stopPropagation(); onUpdate({ w: Math.min(70, (item.w || 35) + 5) }); }}
-                className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-white"
-                style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>+</button>
-            </>
+        <>
+          {/* Mode toggle + actions toolbar */}
+          <div className="absolute -top-11 left-1/2 -translate-x-1/2 flex gap-1 z-20" onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()}>
+            <button onClick={e => { e.stopPropagation(); onSetMode("move"); }}
+              className="px-2 h-7 rounded-full flex items-center justify-center text-[10px] text-white transition"
+              style={{
+                background: activeMode === "move" ? "linear-gradient(110deg, #ff6ec7, #a78bfa)" : "rgba(30,15,55,0.9)",
+                backdropFilter: "blur(8px)",
+                boxShadow: activeMode === "move" ? "0 2px 8px rgba(255,110,199,0.5)" : "none",
+                fontFamily: "'VT323', monospace", letterSpacing: "0.1em",
+              }}>✥ move</button>
+            {canResize && (
+              <button onClick={e => { e.stopPropagation(); onSetMode("resize"); }}
+                className="px-2 h-7 rounded-full flex items-center justify-center text-[10px] text-white transition"
+                style={{
+                  background: activeMode === "resize" ? "linear-gradient(110deg, #60e5ff, #a78bfa)" : "rgba(30,15,55,0.9)",
+                  backdropFilter: "blur(8px)",
+                  boxShadow: activeMode === "resize" ? "0 2px 8px rgba(96,229,255,0.5)" : "none",
+                  fontFamily: "'VT323', monospace", letterSpacing: "0.1em",
+                }}>⇲ resize</button>
+            )}
+            <button onClick={e => { e.stopPropagation(); onUpdate({ rotation: (item.rotation || 0) - 10 }); }}
+              className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-white"
+              style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>↺</button>
+            <button onClick={e => { e.stopPropagation(); onUpdate({ rotation: (item.rotation || 0) + 10 }); }}
+              className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-white"
+              style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>↻</button>
+            <button onClick={e => { e.stopPropagation(); onDelete(); }}
+              className="w-7 h-7 rounded-full flex items-center justify-center"
+              style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>
+              <Trash2 className="w-3.5 h-3.5 text-pink-300" />
+            </button>
+          </div>
+          {/* Resize step buttons (also visible when resize is active, below item) */}
+          {canResize && activeMode === "resize" && (
+            <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 flex gap-1 z-20" onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()}>
+              {item.type === "image" ? (
+                <>
+                  <button onClick={e => { e.stopPropagation(); onUpdate({ w: Math.max(15, (item.w || 35) - 5) }); }}
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-white"
+                    style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>−</button>
+                  <button onClick={e => { e.stopPropagation(); onUpdate({ w: Math.min(70, (item.w || 35) + 5) }); }}
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-white"
+                    style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>+</button>
+                </>
+              ) : (
+                <>
+                  <button onClick={e => { e.stopPropagation(); onUpdate({ size: Math.max(20, (item.size || 56) - 8) }); }}
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-white"
+                    style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>−</button>
+                  <button onClick={e => { e.stopPropagation(); onUpdate({ size: Math.min(180, (item.size || 56) + 8) }); }}
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-white"
+                    style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>+</button>
+                </>
+              )}
+            </div>
           )}
-          <button onClick={e => { e.stopPropagation(); onDelete(); }}
-            className="w-7 h-7 rounded-full flex items-center justify-center"
-            style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>
-            <Trash2 className="w-3.5 h-3.5 text-pink-300" />
-          </button>
-        </div>
+        </>
       )}
       {item.type === "image" && (
         <div style={{
           width: `${item.w}%`, minWidth: 80, padding: 6, background: "white", borderRadius: 6,
-          boxShadow: selected ? "0 0 0 2px #ff6ec7, 0 0 20px #ff6ec7, 0 10px 25px rgba(0,0,0,0.3)" : "0 6px 18px rgba(0,0,0,0.25)",
+          boxShadow: selected
+            ? (activeMode === "resize"
+                ? "0 0 0 2px #60e5ff, 0 0 20px #60e5ff, 0 10px 25px rgba(0,0,0,0.3)"
+                : "0 0 0 2px #ff6ec7, 0 0 20px #ff6ec7, 0 10px 25px rgba(0,0,0,0.3)")
+            : "0 6px 18px rgba(0,0,0,0.25)",
+          position: "relative",
         }}>
           <img src={item.src} alt="" className="w-full block pointer-events-none" style={{borderRadius: 2}} draggable={false} />
+          {/* Drag-to-resize corner handle (only in resize mode) */}
+          {selected && activeMode === "resize" && (
+            <div
+              onMouseDown={(e) => { e.stopPropagation(); onStartResize(e); }}
+              onTouchStart={(e) => { e.stopPropagation(); onStartResize(e); }}
+              className="absolute -bottom-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px]"
+              style={{
+                background: "linear-gradient(110deg, #60e5ff, #a78bfa)",
+                boxShadow: "0 2px 8px rgba(96,229,255,0.7)",
+                cursor: "nwse-resize", touchAction: "none",
+              }}>⇲</div>
+          )}
         </div>
       )}
       {item.type === "sticker" && (
-        <div style={{fontSize: item.size, filter: selected ? "drop-shadow(0 0 10px #ff6ec7)" : "drop-shadow(0 2px 4px rgba(0,0,0,0.2))", lineHeight: 1}}>
+        <div style={{
+          fontSize: item.size,
+          filter: selected
+            ? (activeMode === "resize" ? "drop-shadow(0 0 10px #60e5ff)" : "drop-shadow(0 0 10px #ff6ec7)")
+            : "drop-shadow(0 2px 4px rgba(0,0,0,0.2))",
+          lineHeight: 1, position: "relative",
+        }}>
           {item.content}
+          {selected && activeMode === "resize" && (
+            <div
+              onMouseDown={(e) => { e.stopPropagation(); onStartResize(e); }}
+              onTouchStart={(e) => { e.stopPropagation(); onStartResize(e); }}
+              className="absolute -bottom-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px]"
+              style={{
+                background: "linear-gradient(110deg, #60e5ff, #a78bfa)",
+                boxShadow: "0 2px 8px rgba(96,229,255,0.7)",
+                cursor: "nwse-resize", touchAction: "none",
+              }}>⇲</div>
+          )}
         </div>
       )}
       {item.type === "text" && (
@@ -1130,13 +1398,15 @@ function CollageItem({ item, selected, onPointerDown, onDelete, onUpdate }) {
 // ---------- Collage settings modal ----------
 function CollageSettings({ entry, onUpdate, onDelete, onClose, availableImages }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md fade-in" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md fade-in"
+      style={{background: "rgba(60, 35, 110, 0.45)"}} onClick={onClose}>
       <div onClick={e => e.stopPropagation()}
         className="w-full max-w-md p-5 slide-in rounded-3xl"
         style={{
-          background: "linear-gradient(160deg, #2d1b4e 0%, #1a0b2e 100%)",
-          border: "1px solid rgba(255,255,255,0.15)",
+          background: "linear-gradient(160deg, #f7d6ff 0%, #c5b3ff 50%, #ffb4de 100%)",
+          border: "1px solid rgba(255,255,255,0.45)",
           maxHeight: "90vh", overflowY: "auto",
+          boxShadow: "0 20px 60px rgba(167,139,250,0.35)",
         }}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="iridescent-text" style={{fontFamily: "'Pacifico', cursive", fontSize: "24px"}}>page settings</h3>
@@ -1226,13 +1496,14 @@ function JournalEditor({ entry, onClose, onSave, onDelete, photoImages }) {
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-black/90 backdrop-blur-md fade-in overflow-y-auto">
+    <div className="fixed inset-0 z-40 flex flex-col backdrop-blur-md fade-in overflow-y-auto"
+      style={{background: "linear-gradient(160deg, rgba(247,214,255,0.96) 0%, rgba(197,179,255,0.95) 30%, rgba(255,180,222,0.94) 65%, rgba(167,230,255,0.96) 100%)"}}>
       <div className="max-w-xl mx-auto w-full p-4 pb-12">
         <div className="flex items-center justify-between mb-4">
           <button onClick={onClose} className="w-9 h-9 rounded-full glass-light flex items-center justify-center">
             <X className="w-4 h-4 text-white" />
           </button>
-          <p className="text-white/60" style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>
+          <p className="text-white/80" style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>
             journal · {entry?.date || todayDate()}
           </p>
           <button onClick={save}
@@ -1401,7 +1672,8 @@ function CheckInFlow({ onClose, onSave, photoImages }) {
   const current = steps[step];
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-black/80 backdrop-blur-md fade-in">
+    <div className="fixed inset-0 z-40 flex flex-col backdrop-blur-md fade-in"
+      style={{background: "linear-gradient(160deg, rgba(247,214,255,0.96) 0%, rgba(197,179,255,0.95) 30%, rgba(255,180,222,0.94) 65%, rgba(167,230,255,0.96) 100%)"}}>
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-md mx-auto p-5 min-h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
@@ -1445,7 +1717,7 @@ function CheckInFlow({ onClose, onSave, photoImages }) {
           </div>
 
           <div className="flex gap-3 mt-6 sticky bottom-0 pt-4 pb-2"
-            style={{background: "linear-gradient(to top, rgba(0,0,0,0.9), transparent)"}}>
+            style={{background: "linear-gradient(to top, rgba(167,139,250,0.55) 0%, rgba(167,139,250,0.25) 60%, transparent 100%)"}}>
             {step > 0 && (
               <button onClick={() => setStep(step - 1)}
                 className="px-5 py-3 rounded-xl text-white/80 text-sm glass-light flex items-center gap-1">
@@ -1711,7 +1983,8 @@ function StepPhotos({ data, update, photoImages }) {
 // ============================================================
 function EntryViewer({ entry, onClose, onDelete, onEdit }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/80 backdrop-blur-md fade-in overflow-y-auto" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 backdrop-blur-md fade-in overflow-y-auto"
+      style={{background: "linear-gradient(160deg, rgba(247,214,255,0.9) 0%, rgba(197,179,255,0.88) 35%, rgba(255,180,222,0.88) 65%, rgba(167,230,255,0.9) 100%)"}} onClick={onClose}>
       <div className="relative max-w-md w-full my-4" onClick={e => e.stopPropagation()}>
         <button onClick={onClose} className="absolute -top-2 right-0 w-9 h-9 rounded-full glass-light flex items-center justify-center z-10">
           <X className="w-4 h-4 text-white" />
@@ -1731,13 +2004,13 @@ function PhotoView({ entry, onDelete }) {
   return (
     <>
       <img src={entry.image} alt="" className="w-full" />
-      <div className="p-5" style={{background: "rgba(30, 15, 55, 0.95)", backdropFilter: "blur(20px)"}}>
-        <div className="flex items-center justify-between mb-3 text-xs text-white/60">
+      <div className="p-5" style={{background: "linear-gradient(160deg, #f7d6ff 0%, #ffe6f5 50%, #ffb4de 100%)", backdropFilter: "blur(20px)"}}>
+        <div className="flex items-center justify-between mb-3 text-xs" style={{color: "#5b3a8a"}}>
           <span style={{fontFamily: "'VT323', monospace", fontSize: "14px"}}>▸ {entry.date} · {entry.time}</span>
           <span className="text-lg">{entry.mood}</span>
         </div>
-        <p className="text-white text-base mb-4">{entry.caption}</p>
-        <button onClick={onDelete} className="text-xs text-white/40 hover:text-pink-400 transition flex items-center gap-1">
+        <p className="text-base mb-4" style={{color: "#2d1b4e"}}>{entry.caption}</p>
+        <button onClick={onDelete} className="text-xs transition flex items-center gap-1" style={{color: "#7a5aa8"}}>
           <Trash2 className="w-3 h-3" /> delete
         </button>
       </div>
@@ -1747,14 +2020,14 @@ function PhotoView({ entry, onDelete }) {
 
 function CollageView({ entry, onEdit }) {
   return (
-    <div style={{background: "linear-gradient(160deg, #1a0b2e 0%, #2d1b4e 100%)"}} className="p-5">
+    <div style={{background: "linear-gradient(160deg, #f7d6ff 0%, #c5b3ff 50%, #ffb4de 100%)"}} className="p-5">
       <div className="flex items-center gap-2 mb-3">
-        <Layers className="w-4 h-4" style={{color: "#A78BFA"}} />
+        <Layers className="w-4 h-4" style={{color: "#5b3a8a"}} />
         <span className="iridescent-text font-semibold" style={{fontFamily: "'Pacifico', cursive", fontSize: "22px"}}>
           {entry.title}
         </span>
       </div>
-      <p className="text-white/60 mb-4" style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em"}}>
+      <p className="mb-4" style={{color: "#5b3a8a", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em"}}>
         ▸ {entry.date} · {entry.time}
       </p>
       {/* Static mini collage preview */}
@@ -1786,7 +2059,7 @@ function CollageView({ entry, onEdit }) {
           ))}
         </svg>
       </div>
-      {entry.caption && <p className="text-white mb-4">{entry.caption}</p>}
+      {entry.caption && <p className="mb-4" style={{color: "#2d1b4e"}}>{entry.caption}</p>}
       <button onClick={onEdit}
         className="w-full py-3 rounded-xl text-white iridescent"
         style={{boxShadow: "0 4px 16px rgba(255,110,199,0.4)"}}>
@@ -1798,14 +2071,14 @@ function CollageView({ entry, onEdit }) {
 
 function JournalView({ entry, onEdit }) {
   return (
-    <div style={{background: "linear-gradient(160deg, #1a0b2e 0%, #2d1b4e 100%)"}} className="p-5">
+    <div style={{background: "linear-gradient(160deg, #f7d6ff 0%, #ffe6f5 50%, #ffb4de 100%)"}} className="p-5">
       <div className="flex items-center gap-2 mb-3">
-        <FileText className="w-4 h-4" style={{color: "#FFD166"}} />
+        <FileText className="w-4 h-4" style={{color: "#b08437"}} />
         <span className="iridescent-text font-semibold" style={{fontFamily: "'Pacifico', cursive", fontSize: "22px"}}>
           {entry.title}
         </span>
       </div>
-      <p className="text-white/60 mb-4" style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em"}}>
+      <p className="mb-4" style={{color: "#5b3a8a", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em"}}>
         ▸ {entry.date} · {entry.time}
       </p>
       <div className="rounded-xl p-5 mb-4" style={{background: "linear-gradient(135deg, #fff4e6 0%, #ffeef8 100%)"}}>
@@ -1829,7 +2102,7 @@ function JournalView({ entry, onEdit }) {
   );
 }
 
-function CheckinView({ entry, onDelete }) {
+function CheckinView({ entry, onDelete }) { /* lighter view */
   const sections = [
     { label: "carrying forward", value: entry.carry, highlight: true },
     { label: "releasing", value: entry.release, highlight: true },
@@ -1843,11 +2116,11 @@ function CheckinView({ entry, onDelete }) {
   ].filter(s => s.value?.trim());
 
   return (
-    <div style={{background: "linear-gradient(160deg, #1a0b2e 0%, #2d1b4e 100%)"}} className="p-6">
-      <div className="text-center mb-5 pb-5" style={{borderBottom: "1px solid rgba(255,255,255,0.1)"}}>
+    <div style={{background: "linear-gradient(160deg, #e8f0ff 0%, #f7d6ff 50%, #a7e6ff 100%)"}} className="p-6">
+      <div className="text-center mb-5 pb-5" style={{borderBottom: "1px solid rgba(91, 58, 138, 0.18)"}}>
         <div className="flex items-center justify-center gap-2 mb-2">
-          <ClipboardCheck className="w-4 h-4" style={{color: "#60E5FF"}} />
-          <span className="text-white/70" style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.3em", textTransform: "uppercase"}}>
+          <ClipboardCheck className="w-4 h-4" style={{color: "#2c8fb5"}} />
+          <span style={{color: "#5b3a8a", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.3em", textTransform: "uppercase"}}>
             ✦ weekly check-in ✦
           </span>
         </div>
@@ -1857,23 +2130,23 @@ function CheckinView({ entry, onDelete }) {
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-5">
-        <div className="p-4 rounded-2xl" style={{background: "rgba(184, 255, 107, 0.1)", border: "1px solid rgba(184, 255, 107, 0.3)"}}>
-          <p className="mb-1" style={{color: "#B8FF6B", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>body</p>
-          <p className="text-3xl font-bold" style={{color: "#B8FF6B", fontFamily: "'VT323', monospace"}}>{entry.bodyScore || "—"}<span className="text-sm text-white/40"> / 5</span></p>
+        <div className="p-4 rounded-2xl" style={{background: "rgba(184, 255, 107, 0.3)", border: "1px solid rgba(120, 180, 60, 0.5)"}}>
+          <p className="mb-1" style={{color: "#4e7a1f", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>body</p>
+          <p className="text-3xl font-bold" style={{color: "#4e7a1f", fontFamily: "'VT323', monospace"}}>{entry.bodyScore || "—"}<span className="text-sm" style={{color: "rgba(78,122,31,0.55)"}}> / 5</span></p>
         </div>
-        <div className="p-4 rounded-2xl" style={{background: "rgba(255, 209, 102, 0.1)", border: "1px solid rgba(255, 209, 102, 0.3)"}}>
-          <p className="mb-1" style={{color: "#FFD166", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>mind</p>
-          <p className="text-3xl font-bold" style={{color: "#FFD166", fontFamily: "'VT323', monospace"}}>{entry.mindScore || "—"}<span className="text-sm text-white/40"> / 5</span></p>
+        <div className="p-4 rounded-2xl" style={{background: "rgba(255, 209, 102, 0.3)", border: "1px solid rgba(200, 150, 60, 0.5)"}}>
+          <p className="mb-1" style={{color: "#8a5a1a", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>mind</p>
+          <p className="text-3xl font-bold" style={{color: "#8a5a1a", fontFamily: "'VT323', monospace"}}>{entry.mindScore || "—"}<span className="text-sm" style={{color: "rgba(138,90,26,0.55)"}}> / 5</span></p>
         </div>
       </div>
 
       {entry.moods?.length > 0 && (
         <div className="mb-5">
-          <p className="mb-2 text-white/60" style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>▸ the week's vibe</p>
+          <p className="mb-2" style={{color: "#5b3a8a", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>▸ the week's vibe</p>
           <div className="flex flex-wrap gap-1.5">
             {entry.moods.map((m, i) => (
-              <span key={i} className="px-2.5 py-1 rounded-full text-xs text-white"
-                style={{background: "rgba(255,110,199,0.2)", border: "1px solid rgba(255,110,199,0.4)"}}>{m}</span>
+              <span key={i} className="px-2.5 py-1 rounded-full text-xs"
+                style={{background: "rgba(255,110,199,0.25)", border: "1px solid rgba(255,110,199,0.5)", color: "#8a2a6a"}}>{m}</span>
             ))}
           </div>
         </div>
@@ -1881,11 +2154,11 @@ function CheckinView({ entry, onDelete }) {
 
       {entry.whimsy?.length > 0 && (
         <div className="mb-5">
-          <p className="mb-2 text-white/60" style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>▸ whimsy moments ({entry.whimsy.length}/8)</p>
+          <p className="mb-2" style={{color: "#5b3a8a", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>▸ whimsy moments ({entry.whimsy.length}/8)</p>
           <div className="flex flex-wrap gap-1.5">
             {entry.whimsy.map((w, i) => (
               <span key={i} className="px-2.5 py-1 rounded-full text-xs"
-                style={{background: "rgba(96, 229, 255, 0.15)", border: "1px solid rgba(96, 229, 255, 0.4)", color: "#a0eaff"}}>{w}</span>
+                style={{background: "rgba(96, 229, 255, 0.3)", border: "1px solid rgba(44, 143, 181, 0.5)", color: "#1f5f7a"}}>{w}</span>
             ))}
           </div>
         </div>
@@ -1895,21 +2168,21 @@ function CheckinView({ entry, onDelete }) {
         <div className="grid grid-cols-3 gap-2 mb-5">
           {entry.images.map((src, i) => (
             <img key={i} src={src} alt="" className="aspect-square object-cover rounded-xl"
-              style={{boxShadow: "0 4px 12px rgba(0,0,0,0.3)"}} />
+              style={{boxShadow: "0 4px 12px rgba(91,58,138,0.25)"}} />
           ))}
         </div>
       )}
 
       {sections.map((s, i) => (
         <div key={i} className="mb-4">
-          <p className="mb-1 text-white/60" style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>▸ {s.label}</p>
-          <p className={s.highlight ? "text-white text-base" : "text-white/80 text-sm"} style={{lineHeight: 1.6, whiteSpace: "pre-wrap"}}>
+          <p className="mb-1" style={{color: "#5b3a8a", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase"}}>▸ {s.label}</p>
+          <p className={s.highlight ? "text-base" : "text-sm"} style={{color: s.highlight ? "#2d1b4e" : "#4a2e7a", lineHeight: 1.6, whiteSpace: "pre-wrap"}}>
             {s.value}
           </p>
         </div>
       ))}
 
-      <button onClick={onDelete} className="text-xs text-white/40 hover:text-pink-400 transition flex items-center gap-1 mt-4">
+      <button onClick={onDelete} className="text-xs transition flex items-center gap-1 mt-4" style={{color: "#7a5aa8"}}>
         <Trash2 className="w-3 h-3" /> delete check-in
       </button>
     </div>
@@ -1967,7 +2240,7 @@ function BottomNav({ view, setView, onCompose }) {
       <div className="relative">
         <div className="absolute -inset-0.5 rounded-full iridescent opacity-80 blur-sm" />
         <div className="relative flex items-center gap-1 p-1.5 rounded-full"
-          style={{background: "rgba(20, 10, 40, 0.85)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.15)"}}>
+          style={{background: "rgba(80, 50, 130, 0.65)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.3)"}}>
           <NavBtn active={view === "feed"} onClick={() => setView("feed")} icon={<Grid3x3 className="w-4 h-4" />} label="feed" />
           <button onClick={onCompose}
             className="w-12 h-12 rounded-full flex items-center justify-center mx-1 transition hover:scale-110 iridescent"
