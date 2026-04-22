@@ -165,7 +165,7 @@ export default function App() {
       <AmbientBackground />
       <FloatingSparkles />
 
-      <div className="relative z-10 max-w-xl mx-auto pb-36">
+      <div className="relative z-10 max-w-xl md:max-w-6xl mx-auto pb-36">
         <Header />
         {view === "feed" && (
           <FeedView entries={entries} onOpen={setOpenEntry} filter={filter} setFilter={setFilter} />
@@ -290,18 +290,11 @@ function FloatingSparkles() {
 function Header() {
   return (
     <div className="pt-10 pb-4 px-6 text-center">
-      <div className="inline-flex items-center gap-2 mb-2">
-        <div className="h-px w-6" style={{background: "linear-gradient(90deg, transparent, #ff6ec7)"}} />
-        <span style={{color: "#4a2e7a", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.35em", textTransform: "uppercase"}}>
-          ✦ artist of life ✦
-        </span>
-        <div className="h-px w-6" style={{background: "linear-gradient(270deg, transparent, #60e5ff)"}} />
-      </div>
       <h1 className="text-6xl font-bold iridescent-text tracking-tight" style={{fontFamily: "'Pacifico', cursive", lineHeight: 1}}>
         daydream
       </h1>
       <p className="text-xs mt-2 italic" style={{color: "#6b4aa8", fontFamily: "'Caveat', cursive", fontSize: "16px"}}>
-        a private place for soft thoughts & loud colors
+        Romanticize life with radical whimsy
       </p>
     </div>
   );
@@ -321,9 +314,9 @@ function FeedView({ entries, onOpen, filter, setFilter }) {
   ];
 
   return (
-    <div className="px-4 space-y-5">
+    <div className="px-4">
       {/* Timeline header + filter */}
-      <div className="pt-2">
+      <div className="pt-2 mb-5">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-pulse" style={{boxShadow: "0 0 8px #ff6ec7"}} />
           <span className="text-xs" style={{color: "#5b3a8a", fontFamily: "'VT323', monospace", fontSize: "14px", letterSpacing: "0.15em", textTransform: "uppercase"}}>
@@ -337,10 +330,11 @@ function FeedView({ entries, onOpen, filter, setFilter }) {
               <button key={f.id} onClick={() => setFilter(f.id)}
                 className="px-3 py-1.5 rounded-full whitespace-nowrap transition flex-shrink-0"
                 style={{
-                  background: active ? "linear-gradient(110deg, rgba(255,110,199,0.3), rgba(96,229,255,0.3))" : "rgba(255,255,255,0.06)",
-                  border: `1px solid ${active ? "rgba(255,110,199,0.6)" : "rgba(255,255,255,0.15)"}`,
-                  color: active ? "white" : "rgba(255,255,255,0.6)",
+                  background: active ? "linear-gradient(110deg, rgba(255,110,199,0.45), rgba(96,229,255,0.45))" : "rgba(255,255,255,0.4)",
+                  border: `1px solid ${active ? "rgba(255,110,199,0.75)" : "rgba(167,139,250,0.4)"}`,
+                  color: active ? "#2d1b4e" : "#5b3a8a",
                   fontSize: "12px",
+                  fontWeight: active ? 600 : 500,
                   boxShadow: active ? "0 0 12px rgba(255,110,199,0.3)" : "none",
                 }}>
                 {f.label}
@@ -356,9 +350,13 @@ function FeedView({ entries, onOpen, filter, setFilter }) {
             ✦ no {filter} entries yet ✦
           </p>
         </div>
-      ) : filtered.map((entry, i) => (
-        <FeedPost key={entry.id} entry={entry} index={i} onOpen={() => onOpen(entry)} />
-      ))}
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5 md:gap-4">
+          {filtered.map((entry, i) => (
+            <FeedPost key={entry.id} entry={entry} index={i} onOpen={() => onOpen(entry)} />
+          ))}
+        </div>
+      )}
 
       {filtered.length > 0 && (
         <div className="text-center py-10">
@@ -512,7 +510,7 @@ function ScrapbookView({ entries, onOpen, onNewCompose }) {
           <p className="text-sm" style={{color: "#7a5aa8"}}>tap the + button to start a new page</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {entries.map((entry, i) => (
             <ScrapbookThumb key={entry.id} entry={entry} index={i} onClick={() => onOpen(entry)} />
           ))}
@@ -1014,7 +1012,7 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   return (
     <div className="fixed inset-0 z-40 flex flex-col backdrop-blur-md fade-in overflow-y-auto"
       style={{background: "linear-gradient(160deg, rgba(247,214,255,0.96) 0%, rgba(197,179,255,0.95) 30%, rgba(255,180,222,0.94) 65%, rgba(167,230,255,0.96) 100%)"}}>
-      <div className="max-w-xl mx-auto w-full p-4 pb-12">
+      <div className="max-w-xl md:max-w-4xl mx-auto w-full p-4 pb-12">
         {/* Top bar */}
         <div className="flex items-center justify-between mb-4">
           <button onClick={onClose} className="w-9 h-9 rounded-full glass-light flex items-center justify-center">
@@ -1498,7 +1496,7 @@ function JournalEditor({ entry, onClose, onSave, onDelete, photoImages }) {
   return (
     <div className="fixed inset-0 z-40 flex flex-col backdrop-blur-md fade-in overflow-y-auto"
       style={{background: "linear-gradient(160deg, rgba(247,214,255,0.96) 0%, rgba(197,179,255,0.95) 30%, rgba(255,180,222,0.94) 65%, rgba(167,230,255,0.96) 100%)"}}>
-      <div className="max-w-xl mx-auto w-full p-4 pb-12">
+      <div className="max-w-xl md:max-w-4xl mx-auto w-full p-4 pb-12">
         <div className="flex items-center justify-between mb-4">
           <button onClick={onClose} className="w-9 h-9 rounded-full glass-light flex items-center justify-center">
             <X className="w-4 h-4" style={{color: "#3d1d6b"}} />
@@ -1675,7 +1673,7 @@ function CheckInFlow({ onClose, onSave, photoImages }) {
     <div className="fixed inset-0 z-40 flex flex-col backdrop-blur-md fade-in"
       style={{background: "linear-gradient(160deg, rgba(247,214,255,0.96) 0%, rgba(197,179,255,0.95) 30%, rgba(255,180,222,0.94) 65%, rgba(167,230,255,0.96) 100%)"}}>
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-md mx-auto p-5 min-h-full flex flex-col">
+        <div className="max-w-md md:max-w-3xl mx-auto p-5 min-h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <button onClick={onClose} className="w-9 h-9 rounded-full glass-light flex items-center justify-center">
               <X className="w-4 h-4" style={{color: "#3d1d6b"}} />
