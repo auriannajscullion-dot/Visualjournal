@@ -8,8 +8,49 @@ if (!url || !key) {
 }
 
 export const supabase = createClient(url, key, {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storage: typeof window !== "undefined" ? window.localStorage : undefined,
+    storageKey: "daydream.auth",
+    flowType: "pkce",
+  },
 });
+
+// ------------------------------------------------------------
+// 401 / JWT-expired retry wrapper
+//
+// Supabase's client auto-refreshes tokens on a timer, but if a request
+// slips through with a stale token (e.g. tab was backgrounded past the
+// refresh window), the request can 401. Catch that, force a refresh,
+// and try once more before giving up.
+// ------------------------------------------------------------
+function isAuthError(err) {
+  if (!err) return false;
+  const status = err.status ?? err.statusCode ?? err.code;
+  const msg = String(err.message || err.error_description || "").toLowerCase();
+  return (
+    status === 401 ||
+    status === "401" ||
+    status === "PGRST301" ||
+    msg.includes("jwt expired") ||
+    msg.includes("invalid jwt") ||
+    msg.includes("token is expired") ||
+    msg.includes("not authenticated")
+  );
+}
+
+async function withAuthRetry(fn) {
+  try {
+    return await fn();
+  } catch (err) {
+    if (!isAuthError(err)) throw err;
+    const { data, error: refreshError } = await supabase.auth.refreshSession();
+    if (refreshError || !data?.session) throw err;
+    return await fn();
+  }
+}
 
 // ------------------------------------------------------------
 // Entry ↔ Row mapping
@@ -55,27 +96,33 @@ export function rowToEntry(row) {
 }
 
 // ------------------------------------------------------------
-// CRUD
+// CRUD (all go through withAuthRetry)
 // ------------------------------------------------------------
 export async function fetchEntries(userId) {
-  const { data, error } = await supabase
-    .from("entries")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data || []).map(rowToEntry);
+  return withAuthRetry(async () => {
+    const { data, error } = await supabase
+      .from("entries")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data || []).map(rowToEntry);
+  });
 }
 
 export async function upsertEntry(entry, userId) {
-  const row = entryToRow(entry, userId);
-  const { error } = await supabase.from("entries").upsert(row, { onConflict: "id" });
-  if (error) throw error;
+  return withAuthRetry(async () => {
+    const row = entryToRow(entry, userId);
+    const { error } = await supabase.from("entries").upsert(row, { onConflict: "id" });
+    if (error) throw error;
+  });
 }
 
 export async function deleteEntryById(id) {
-  const { error } = await supabase.from("entries").delete().eq("id", id);
-  if (error) throw error;
+  return withAuthRetry(async () => {
+    const { error } = await supabase.from("entries").delete().eq("id", id);
+    if (error) throw error;
+  });
 }
 
 // ------------------------------------------------------------
@@ -97,31 +144,49 @@ function randomId() {
 }
 
 export async function uploadPhoto(file) {
-  const { data: { session } } = await supabase.auth.getSession();
-  const userId = session?.user?.id;
-  if (!userId) throw new Error("not signed in");
-  const path = `${userId}/${randomId()}.${extFor(file)}`;
-  const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
-    cacheControl: "3600",
-    upsert: false,
-    contentType: file.type || undefined,
+  return withAuthRetry(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+    if (!userId) throw new Error("not signed in");
+    const path = `${userId}/${randomId()}.${extFor(file)}`;
+    const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type || undefined,
+    });
+    if (error) throw error;
+    const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+    return data.publicUrl;
   });
-  if (error) throw error;
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-  return data.publicUrl;
 }
 
 // ------------------------------------------------------------
 // Auth helpers
 // ------------------------------------------------------------
-export async function sendMagicLink(email) {
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: window.location.origin },
-  });
+export async function signInWithPassword(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw error;
+  return data;
+}
+
+export async function signUpWithPassword(email, password) {
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error) throw error;
+  // If email confirmation is enabled in the Supabase project, session will be null
+  // until the user confirms. Surface that to the caller so we can show a helpful message.
+  return data;
 }
 
 export async function signOut() {
   await supabase.auth.signOut();
+}
+
+export async function refreshSession() {
+  try {
+    const { data, error } = await supabase.auth.refreshSession();
+    if (error) return null;
+    return data.session;
+  } catch {
+    return null;
+  }
 }
