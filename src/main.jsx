@@ -3,6 +3,9 @@ import ReactDOM from "react-dom/client";
 import App from "../daydream (1).jsx";
 import AuthScreen from "./AuthScreen.jsx";
 import { supabase } from "./supabase.js";
+import { registerSW } from "virtual:pwa-register";
+
+registerSW({ immediate: true });
 
 function Root() {
   const [session, setSession] = useState(null);
