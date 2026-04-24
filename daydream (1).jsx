@@ -1258,8 +1258,8 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
         {/* Export + caption footer */}
         <div className="mt-6 space-y-3">
           <NeonTextarea
-            value={entry.caption || ""}
-            onChange={(v) => onUpdate({ caption: v })}
+            value={localCaption}
+            onChange={setLocalCaption}
             placeholder="caption (shown under the post on the feed)" rows={2} />
           <button onClick={handleExport} disabled={exportStatus === "busy"}
             className="w-full py-3 rounded-xl transition flex items-center justify-center gap-2"
