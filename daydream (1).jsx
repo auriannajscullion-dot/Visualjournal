@@ -1394,9 +1394,22 @@ function CollageItem({ item, selected, disabled, onSelect, onStartMove, onMountE
 
 // ---------- Collage settings modal ----------
 function CollageSettings({ entry, onUpdate, onDelete, onClose, availableImages }) {
+  // All settings are kept in LOCAL state so that changing them does NOT
+  // re-render CollageEditor / the canvas. Changes are written to the parent
+  // only when the modal closes.
+  const [localTitle, setLocalTitle] = useState(entry.title);
+  const [localBg, setLocalBg] = useState(entry.bg);
+  const [localDark, setLocalDark] = useState(!!entry.dark);
+  const [localCoverPhoto, setLocalCoverPhoto] = useState(entry.coverPhoto ?? null);
+
+  const handleClose = () => {
+    onUpdate({ title: localTitle, bg: localBg, dark: localDark, coverPhoto: localCoverPhoto });
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md fade-in"
-      style={{background: "rgba(60, 35, 110, 0.45)"}} onClick={onClose}>
+      style={{background: "rgba(60, 35, 110, 0.45)"}} onClick={handleClose}>
       <div onClick={e => e.stopPropagation()}
         className="w-full max-w-md p-5 slide-in rounded-3xl"
         style={{
@@ -1407,26 +1420,26 @@ function CollageSettings({ entry, onUpdate, onDelete, onClose, availableImages }
         }}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="iridescent-text" style={{fontFamily: "'Pacifico', cursive", fontSize: "24px"}}>page settings</h3>
-          <button onClick={onClose} className="w-8 h-8 rounded-full glass-light flex items-center justify-center">
+          <button onClick={handleClose} className="w-8 h-8 rounded-full glass-light flex items-center justify-center">
             <X className="w-4 h-4" style={{color: "#3d1d6b"}} />
           </button>
         </div>
         <NeonLabel>title</NeonLabel>
-        <NeonInput value={entry.title} onChange={v => onUpdate({ title: v })} placeholder="title" />
+        <NeonInput value={localTitle} onChange={setLocalTitle} placeholder="title" />
         <div className="h-3" />
         <CoverPicker
-          coverPhoto={entry.coverPhoto}
-          setCoverPhoto={(c) => onUpdate({ coverPhoto: c })}
+          coverPhoto={localCoverPhoto}
+          setCoverPhoto={setLocalCoverPhoto}
           availableImages={availableImages}
           entryType="collage"
           date={entry.date} />
         <NeonLabel>page background</NeonLabel>
         <div className="grid grid-cols-3 gap-2 mb-4">
           {PAGE_BGS.map((bg, i) => (
-            <button key={i} onClick={() => onUpdate({ bg, dark: i === 4 })}
+            <button key={i} onClick={() => { setLocalBg(bg); setLocalDark(i === 4); }}
               className="h-14 rounded-xl transition"
-              style={{background: bg, border: entry.bg === bg ? "2px solid #ff6ec7" : "1px solid rgba(255,255,255,0.15)",
-                boxShadow: entry.bg === bg ? "0 0 12px rgba(255,110,199,0.5)" : "none"}} />
+              style={{background: bg, border: localBg === bg ? "2px solid #ff6ec7" : "1px solid rgba(255,255,255,0.15)",
+                boxShadow: localBg === bg ? "0 0 12px rgba(255,110,199,0.5)" : "none"}} />
           ))}
         </div>
         <button onClick={() => { if (confirm("delete this collage?")) onDelete(); }}
