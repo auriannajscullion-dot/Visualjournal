@@ -851,34 +851,39 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   const [penSize, setPenSize] = useState(4);
   const [brushType, setBrushType] = useState(BRUSH_TYPES[0].id);
   const [selectedId, setSelectedId] = useState(null);
-  // "move" | "resize" — how interactions on a selected item behave
-  const [itemMode, setItemMode] = useState("move");
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [showStickers, setShowStickers] = useState(false);
   const [addingText, setAddingText] = useState(false);
   const [textDraft, setTextDraft] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [exportStatus, setExportStatus] = useState(null); // null | "busy" | "done"
+  const [saveStatus, setSaveStatus] = useState(null); // null | "saving" | "saved"
 
   const pageRef = useRef(null);
+  const itemElsRef = useRef({});
   const fileInputRef = useRef(null);
   const drawingRef = useRef(false);
   const currentStrokeIdRef = useRef(null);
   const rafPendingRef = useRef(false);
   const pendingPointRef = useRef(null);
 
-  // Working copy — avoid spamming onUpdate while drawing
+  // Working copy — avoid spamming onUpdate while drawing / dragging
   const [localItems, setLocalItems] = useState(entry.items || []);
   const [localStrokes, setLocalStrokes] = useState(entry.strokes || []);
-  useEffect(() => { setLocalItems(entry.items || []); setLocalStrokes(entry.strokes || []); }, [entry.id]);
+  const [localCaption, setLocalCaption] = useState(entry.caption || "");
+  useEffect(() => {
+    setLocalItems(entry.items || []);
+    setLocalStrokes(entry.strokes || []);
+    setLocalCaption(entry.caption || "");
+  }, [entry.id]);
 
   // Debounced flush to parent — kept in ref so latest values are always sent
-  const latestRef = useRef({ items: localItems, strokes: localStrokes });
-  latestRef.current = { items: localItems, strokes: localStrokes };
+  const latestRef = useRef({ items: localItems, strokes: localStrokes, caption: localCaption });
+  latestRef.current = { items: localItems, strokes: localStrokes, caption: localCaption };
   useEffect(() => {
     const t = setTimeout(() => onUpdate(latestRef.current), 400);
     return () => clearTimeout(t);
-  }, [localItems, localStrokes]);
+  }, [localItems, localStrokes, localCaption]);
 
   const addItem = (item) => setLocalItems(prev => [...prev, { id: uid(), ...item }]);
   const updateItem = (id, updates) => setLocalItems(prev => prev.map(it => it.id === id ? { ...it, ...updates } : it));
@@ -966,7 +971,9 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
     setLocalStrokes(prev => prev.filter(s => !s.points.some(pt => Math.hypot(pt.x - p.x, pt.y - p.y) < 5)));
   };
 
-  // Drag an item around (only when itemMode === "move" and item is the selected one)
+  // Drag a selected item — ONLY moves, never resizes.
+  // Position is updated directly on the DOM element via RAF for smooth 60 fps;
+  // React state is committed once on drag-end so no re-renders happen mid-drag.
   const startMoveItem = (e, item) => {
     if (tool) return;
     e.stopPropagation();
@@ -975,66 +982,40 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
     if (startX == null || startY == null) return;
     const rect = pageRef.current.getBoundingClientRect();
     const startLeft = item.x, startTop = item.y;
-    let moved = false;
+    let finalX = startLeft, finalY = startTop;
+    let rafId = null;
+    let lastCX = startX, lastCY = startY;
+    const el = itemElsRef.current[item.id];
+
     const onMove = (ev) => {
-      const t = ev.touches ? ev.touches[0] : ev;
-      if (!t || typeof t.clientX !== "number") return;
-      if (ev.cancelable) ev.preventDefault?.();
-      const dx = ((t.clientX - startX) / rect.width) * 100;
-      const dy = ((t.clientY - startY) / rect.height) * 100;
-      if (Math.abs(dx) + Math.abs(dy) > 0.3) moved = true;
-      updateItem(item.id, {
-        x: Math.max(0, Math.min(95, startLeft + dx)),
-        y: Math.max(0, Math.min(95, startTop + dy)),
+      const touch = ev.touches ? ev.touches[0] : ev;
+      if (!touch || typeof touch.clientX !== "number") return;
+      lastCX = touch.clientX;
+      lastCY = touch.clientY;
+      if (rafId != null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        const dx = ((lastCX - startX) / rect.width) * 100;
+        const dy = ((lastCY - startY) / rect.height) * 100;
+        finalX = Math.max(0, Math.min(95, startLeft + dx));
+        finalY = Math.max(0, Math.min(95, startTop + dy));
+        if (el) { el.style.left = `${finalX}%`; el.style.top = `${finalY}%`; }
       });
     };
-    const onEnd = () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onEnd);
-      window.removeEventListener("touchmove", onMove);
-      window.removeEventListener("touchend", onEnd);
-      window.removeEventListener("touchcancel", onEnd);
-    };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onEnd);
-    window.addEventListener("touchmove", onMove, { passive: false });
-    window.addEventListener("touchend", onEnd);
-    window.addEventListener("touchcancel", onEnd);
-  };
 
-  // Pinch / drag from a corner to resize an image
-  const startResizeItem = (e, item) => {
-    if (tool) return;
-    e.stopPropagation();
-    const startX = e.touches ? e.touches[0]?.clientX : e.clientX;
-    const startY = e.touches ? e.touches[0]?.clientY : e.clientY;
-    if (startX == null || startY == null) return;
-    const rect = pageRef.current.getBoundingClientRect();
-    const startW = item.w || 35;
-    const startSize = item.size || 56;
-    const onMove = (ev) => {
-      const t = ev.touches ? ev.touches[0] : ev;
-      if (!t || typeof t.clientX !== "number") return;
-      if (ev.cancelable) ev.preventDefault?.();
-      const dx = ((t.clientX - startX) / rect.width) * 100;
-      const dy = ((t.clientY - startY) / rect.height) * 100;
-      const delta = (dx + dy) / 2;
-      if (item.type === "image") {
-        updateItem(item.id, { w: Math.max(12, Math.min(80, startW + delta * 1.2)) });
-      } else if (item.type === "sticker") {
-        updateItem(item.id, { size: Math.max(20, Math.min(180, startSize + delta * 2)) });
-      }
-    };
     const onEnd = () => {
+      if (rafId != null) { cancelAnimationFrame(rafId); rafId = null; }
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onEnd);
       window.removeEventListener("touchmove", onMove);
       window.removeEventListener("touchend", onEnd);
       window.removeEventListener("touchcancel", onEnd);
+      updateItem(item.id, { x: finalX, y: finalY });
     };
+
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onEnd);
-    window.addEventListener("touchmove", onMove, { passive: false });
+    window.addEventListener("touchmove", onMove, { passive: true });
     window.addEventListener("touchend", onEnd);
     window.addEventListener("touchcancel", onEnd);
   };
@@ -1117,12 +1098,10 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
             {localItems.map(item => (
               <CollageItem key={item.id} item={item}
                 selected={selectedId === item.id}
-                itemMode={itemMode}
                 disabled={!!tool}
-                onSelect={() => { setSelectedId(item.id); setItemMode("move"); }}
-                onSetMode={(m) => setItemMode(m)}
+                onSelect={() => setSelectedId(item.id)}
                 onStartMove={(e) => startMoveItem(e, item)}
-                onStartResize={(e) => startResizeItem(e, item)}
+                onMountEl={(el) => { itemElsRef.current[item.id] = el; }}
                 onDelete={() => deleteItem(item.id)}
                 onUpdate={(u) => updateItem(item.id, u)} />
             ))}
@@ -1304,142 +1283,81 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   );
 }
 
-function CollageItem({ item, selected, itemMode, disabled, onSelect, onSetMode, onStartMove, onStartResize, onDelete, onUpdate }) {
+function CollageItem({ item, selected, disabled, onSelect, onStartMove, onMountEl, onDelete, onUpdate }) {
+  const rootRef = useRef(null);
   const canResize = item.type === "image" || item.type === "sticker";
-  const activeMode = selected ? itemMode : null;
 
-  // When not selected: first tap selects (shows mode toolbar, no drag yet).
-  // When selected in "move" mode: pointer-down starts a move drag.
-  // When selected in "resize" mode: pointer-down on body does nothing; use corner handle to resize.
+  useEffect(() => {
+    onMountEl?.(rootRef.current);
+    return () => { onMountEl?.(null); };
+  }, []);
+
+  // First tap selects; subsequent pointer-down on selected item starts a move drag.
   const handleBodyPointerDown = (e) => {
     if (disabled) return;
-    if (!selected) {
-      e.stopPropagation();
-      onSelect();
-      return;
-    }
-    if (activeMode === "move") {
-      onStartMove(e);
-    } else {
-      // In resize mode, don't let pointer-down propagate (so page doesn't deselect)
-      e.stopPropagation();
-    }
+    e.stopPropagation();
+    if (!selected) { onSelect(); return; }
+    onStartMove(e);
   };
 
   const style = {
     position: "absolute", left: `${item.x}%`, top: `${item.y}%`,
     transform: `rotate(${item.rotation || 0}deg)`,
-    cursor: disabled ? "default" : (!selected ? "pointer" : activeMode === "move" ? "grab" : "default"),
+    cursor: disabled ? "default" : selected ? "grab" : "pointer",
     touchAction: "none",
   };
+
   return (
-    <div onMouseDown={handleBodyPointerDown} onTouchStart={handleBodyPointerDown} style={style}>
+    <div ref={rootRef} onMouseDown={handleBodyPointerDown} onTouchStart={handleBodyPointerDown} style={style}>
       {selected && (
-        <>
-          {/* Mode toggle + actions toolbar */}
-          <div className="absolute -top-11 left-1/2 -translate-x-1/2 flex gap-1 z-20" onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()}>
-            <button onClick={e => { e.stopPropagation(); onSetMode("move"); }}
-              className="px-2 h-7 rounded-full flex items-center justify-center text-[10px] text-white transition"
-              style={{
-                background: activeMode === "move" ? "linear-gradient(110deg, #ff6ec7, #a78bfa)" : "rgba(30,15,55,0.9)",
-                backdropFilter: "blur(8px)",
-                boxShadow: activeMode === "move" ? "0 2px 8px rgba(255,110,199,0.5)" : "none",
-                fontFamily: "'VT323', monospace", letterSpacing: "0.1em",
-              }}>✥ move</button>
-            {canResize && (
-              <button onClick={e => { e.stopPropagation(); onSetMode("resize"); }}
-                className="px-2 h-7 rounded-full flex items-center justify-center text-[10px] text-white transition"
-                style={{
-                  background: activeMode === "resize" ? "linear-gradient(110deg, #60e5ff, #a78bfa)" : "rgba(30,15,55,0.9)",
-                  backdropFilter: "blur(8px)",
-                  boxShadow: activeMode === "resize" ? "0 2px 8px rgba(96,229,255,0.5)" : "none",
-                  fontFamily: "'VT323', monospace", letterSpacing: "0.1em",
-                }}>⇲ resize</button>
-            )}
-            <button onClick={e => { e.stopPropagation(); onUpdate({ rotation: (item.rotation || 0) - 10 }); }}
+        <div className="absolute -top-11 left-1/2 -translate-x-1/2 flex gap-1 z-20"
+          onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()}>
+          <button onClick={e => { e.stopPropagation(); onUpdate({ rotation: (item.rotation || 0) - 10 }); }}
+            className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-white"
+            style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>↺</button>
+          <button onClick={e => { e.stopPropagation(); onUpdate({ rotation: (item.rotation || 0) + 10 }); }}
+            className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-white"
+            style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>↻</button>
+          {canResize && item.type === "image" && (<>
+            <button onClick={e => { e.stopPropagation(); onUpdate({ w: Math.max(15, (item.w || 35) - 5) }); }}
               className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-white"
-              style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>↺</button>
-            <button onClick={e => { e.stopPropagation(); onUpdate({ rotation: (item.rotation || 0) + 10 }); }}
+              style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>−</button>
+            <button onClick={e => { e.stopPropagation(); onUpdate({ w: Math.min(70, (item.w || 35) + 5) }); }}
               className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-white"
-              style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>↻</button>
-            <button onClick={e => { e.stopPropagation(); onDelete(); }}
-              className="w-7 h-7 rounded-full flex items-center justify-center"
-              style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>
-              <Trash2 className="w-3.5 h-3.5 text-pink-300" />
-            </button>
-          </div>
-          {/* Resize step buttons (also visible when resize is active, below item) */}
-          {canResize && activeMode === "resize" && (
-            <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 flex gap-1 z-20" onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()}>
-              {item.type === "image" ? (
-                <>
-                  <button onClick={e => { e.stopPropagation(); onUpdate({ w: Math.max(15, (item.w || 35) - 5) }); }}
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-white"
-                    style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>−</button>
-                  <button onClick={e => { e.stopPropagation(); onUpdate({ w: Math.min(70, (item.w || 35) + 5) }); }}
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-white"
-                    style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>+</button>
-                </>
-              ) : (
-                <>
-                  <button onClick={e => { e.stopPropagation(); onUpdate({ size: Math.max(20, (item.size || 56) - 8) }); }}
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-white"
-                    style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>−</button>
-                  <button onClick={e => { e.stopPropagation(); onUpdate({ size: Math.min(180, (item.size || 56) + 8) }); }}
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-white"
-                    style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>+</button>
-                </>
-              )}
-            </div>
-          )}
-        </>
+              style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>+</button>
+          </>)}
+          {canResize && item.type === "sticker" && (<>
+            <button onClick={e => { e.stopPropagation(); onUpdate({ size: Math.max(20, (item.size || 56) - 8) }); }}
+              className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-white"
+              style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>−</button>
+            <button onClick={e => { e.stopPropagation(); onUpdate({ size: Math.min(180, (item.size || 56) + 8) }); }}
+              className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-white"
+              style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>+</button>
+          </>)}
+          <button onClick={e => { e.stopPropagation(); onDelete(); }}
+            className="w-7 h-7 rounded-full flex items-center justify-center"
+            style={{background: "rgba(30,15,55,0.9)", backdropFilter: "blur(8px)"}}>
+            <Trash2 className="w-3.5 h-3.5 text-pink-300" />
+          </button>
+        </div>
       )}
       {item.type === "image" && (
         <div style={{
           width: `${item.w}%`, minWidth: 80, padding: 6, background: "white", borderRadius: 6,
           boxShadow: selected
-            ? (activeMode === "resize"
-                ? "0 0 0 2px #60e5ff, 0 0 20px #60e5ff, 0 10px 25px rgba(0,0,0,0.3)"
-                : "0 0 0 2px #ff6ec7, 0 0 20px #ff6ec7, 0 10px 25px rgba(0,0,0,0.3)")
+            ? "0 0 0 2px #ff6ec7, 0 0 20px #ff6ec7, 0 10px 25px rgba(0,0,0,0.3)"
             : "0 6px 18px rgba(0,0,0,0.25)",
           position: "relative",
         }}>
           <img src={item.src} alt="" className="w-full block pointer-events-none" style={{borderRadius: 2}} draggable={false} />
-          {/* Drag-to-resize corner handle (only in resize mode) */}
-          {selected && activeMode === "resize" && (
-            <div
-              onMouseDown={(e) => { e.stopPropagation(); onStartResize(e); }}
-              onTouchStart={(e) => { e.stopPropagation(); onStartResize(e); }}
-              className="absolute -bottom-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px]"
-              style={{
-                background: "linear-gradient(110deg, #60e5ff, #a78bfa)",
-                boxShadow: "0 2px 8px rgba(96,229,255,0.7)",
-                cursor: "nwse-resize", touchAction: "none",
-              }}>⇲</div>
-          )}
         </div>
       )}
       {item.type === "sticker" && (
         <div style={{
           fontSize: item.size,
-          filter: selected
-            ? (activeMode === "resize" ? "drop-shadow(0 0 10px #60e5ff)" : "drop-shadow(0 0 10px #ff6ec7)")
-            : "drop-shadow(0 2px 4px rgba(0,0,0,0.2))",
-          lineHeight: 1, position: "relative",
-        }}>
-          {item.content}
-          {selected && activeMode === "resize" && (
-            <div
-              onMouseDown={(e) => { e.stopPropagation(); onStartResize(e); }}
-              onTouchStart={(e) => { e.stopPropagation(); onStartResize(e); }}
-              className="absolute -bottom-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px]"
-              style={{
-                background: "linear-gradient(110deg, #60e5ff, #a78bfa)",
-                boxShadow: "0 2px 8px rgba(96,229,255,0.7)",
-                cursor: "nwse-resize", touchAction: "none",
-              }}>⇲</div>
-          )}
-        </div>
+          filter: selected ? "drop-shadow(0 0 10px #ff6ec7)" : "drop-shadow(0 2px 4px rgba(0,0,0,0.2))",
+          lineHeight: 1,
+        }}>{item.content}</div>
       )}
       {item.type === "text" && (
         <div style={{
