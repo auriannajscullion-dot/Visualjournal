@@ -1038,6 +1038,18 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   // Images used in this collage (for cover picker)
   const collageImages = useMemo(() => localItems.filter(i => i.type === "image").map(i => i.src), [localItems]);
 
+  const handleSave = () => {
+    setSaveStatus("saving");
+    onUpdate({ items: localItems, strokes: localStrokes, caption: localCaption });
+    setSaveStatus("saved");
+    setTimeout(() => setSaveStatus(null), 2000);
+  };
+
+  const handleClose = () => {
+    onUpdate({ items: localItems, strokes: localStrokes, caption: localCaption });
+    onClose();
+  };
+
   const handleExport = async () => {
     setExportStatus("busy");
     try {
@@ -1057,7 +1069,7 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
       <div className="max-w-xl md:max-w-4xl mx-auto w-full p-4 pb-12">
         {/* Top bar */}
         <div className="flex items-center justify-between mb-4">
-          <button onClick={onClose} className="w-9 h-9 rounded-full glass-light flex items-center justify-center">
+          <button onClick={handleClose} className="w-9 h-9 rounded-full glass-light flex items-center justify-center">
             <X className="w-4 h-4" style={{color: "#3d1d6b"}} />
           </button>
           <div className="flex-1 mx-3 text-center">
@@ -1261,12 +1273,20 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
             value={localCaption}
             onChange={setLocalCaption}
             placeholder="caption (shown under the post on the feed)" rows={2} />
-          <button onClick={handleExport} disabled={exportStatus === "busy"}
-            className="w-full py-3 rounded-xl transition flex items-center justify-center gap-2"
-            style={{color: "#3d1d6b", background: "rgba(255,255,255,0.45)", border: "1px solid rgba(96,229,255,0.6)"}}>
-            <Download className="w-4 h-4" />
-            {exportStatus === "busy" ? "exporting..." : exportStatus === "done" ? "saved ✦" : "export as PDF"}
-          </button>
+          <div className="flex gap-2">
+            <button onClick={handleSave} disabled={saveStatus === "saving"}
+              className="flex-1 py-3 rounded-xl transition flex items-center justify-center gap-2"
+              style={{color: "#3d1d6b", background: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,110,199,0.5)",
+                boxShadow: saveStatus === "saved" ? "0 0 12px rgba(255,110,199,0.4)" : "none"}}>
+              {saveStatus === "saved" ? "saved ✦" : saveStatus === "saving" ? "saving..." : "save ✦"}
+            </button>
+            <button onClick={handleExport} disabled={exportStatus === "busy"}
+              className="flex-1 py-3 rounded-xl transition flex items-center justify-center gap-2"
+              style={{color: "#3d1d6b", background: "rgba(255,255,255,0.45)", border: "1px solid rgba(96,229,255,0.6)"}}>
+              <Download className="w-4 h-4" />
+              {exportStatus === "busy" ? "exporting..." : exportStatus === "done" ? "done ✦" : "export PDF"}
+            </button>
+          </div>
         </div>
       </div>
 
