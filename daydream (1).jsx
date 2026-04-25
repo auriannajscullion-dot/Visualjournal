@@ -240,6 +240,7 @@ export default function App({ session }) {
           <ScrapbookView
             entries={scrapbookEntries}
             onOpen={(e) => setEditingScrapbookEntry(e)}
+            onDelete={(e) => deleteEntry(e.id)}
             onNewCompose={(type) => setCompose(type === "collage" ? "collage-new" : type === "journal" ? "journal-new" : "checkin-new")}
           />
         )}
@@ -556,7 +557,7 @@ function GeneratedCover({ entryType, date }) {
 // ============================================================
 // SCRAPBOOK VIEW — shows only non-photo entries
 // ============================================================
-function ScrapbookView({ entries, onOpen, onNewCompose }) {
+function ScrapbookView({ entries, onOpen, onDelete, onNewCompose }) {
   return (
     <div className="px-4 pt-2">
       <div className="flex items-center justify-between mb-4">
@@ -578,7 +579,9 @@ function ScrapbookView({ entries, onOpen, onNewCompose }) {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {entries.map((entry, i) => (
-            <ScrapbookThumb key={entry.id} entry={entry} index={i} onClick={() => onOpen(entry)} />
+            <ScrapbookThumb key={entry.id} entry={entry} index={i}
+              onClick={() => onOpen(entry)}
+              onDelete={() => onDelete(entry)} />
           ))}
         </div>
       )}
@@ -586,19 +589,19 @@ function ScrapbookView({ entries, onOpen, onNewCompose }) {
   );
 }
 
-function ScrapbookThumb({ entry, index, onClick }) {
+function ScrapbookThumb({ entry, index, onClick, onDelete }) {
   const tilt = [-2, 1.5, -1, 2.2, -1.5, 1][index % 6];
   const cover = getCoverPhoto(entry);
   const typeLabels = { collage: "collage", journal: "journal", checkin: "check-in" };
   const typeColors = { collage: "#A78BFA", journal: "#FFD166", checkin: "#60E5FF" };
 
   return (
-    <div onClick={onClick} className="relative slide-in cursor-pointer group"
+    <div className="relative slide-in group"
       style={{transform: `rotate(${tilt}deg)`, transition: "transform 0.3s"}}
       onMouseEnter={e => e.currentTarget.style.transform = `rotate(${tilt/2}deg) translateY(-2px) scale(1.02)`}
       onMouseLeave={e => e.currentTarget.style.transform = `rotate(${tilt}deg)`}>
       <div className="absolute -inset-0.5 rounded-2xl iridescent opacity-50 blur-sm group-hover:opacity-90 transition" />
-      <div className="relative rounded-2xl overflow-hidden" style={{aspectRatio: "3/4", boxShadow: "0 10px 30px rgba(0,0,0,0.3)"}}>
+      <div onClick={onClick} className="relative rounded-2xl overflow-hidden cursor-pointer" style={{aspectRatio: "3/4", boxShadow: "0 10px 30px rgba(0,0,0,0.3)"}}>
         {cover.type === "image"
           ? <img src={cover.src} alt="" className="w-full h-full object-cover" />
           : <GeneratedCover entryType={cover.entryType} date={cover.date} />}
@@ -620,6 +623,13 @@ function ScrapbookThumb({ entry, index, onClick }) {
           </div>
         </div>
       </div>
+      {/* Delete button — visible on hover */}
+      <button
+        onClick={(e) => { e.stopPropagation(); if (window.confirm("delete this page?")) onDelete(); }}
+        className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition z-10"
+        style={{background: "rgba(30,15,55,0.85)", backdropFilter: "blur(6px)"}}>
+        <Trash2 className="w-3 h-3 text-pink-300" />
+      </button>
     </div>
   );
 }
@@ -886,14 +896,21 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   const activeLineRef = useRef(null);    // imperative Konva.Line during a draw stroke
   const currentStrokeMetaRef = useRef(null);
 
-  // Measure the container so the Stage always has explicit pixel dimensions
+  // stageSizeRef lets pointer handlers read the current size without being in
+  // their useCallback dep arrays — avoids recreating handlers on every resize.
+  const stageSizeRef = useRef({ w: 0, h: 0 });
   const [stageSize, setStageSize] = useState({ w: 0, h: 0 });
   useEffect(() => {
     const el = pageRef.current;
     if (!el) return;
     const update = () => {
       const r = el.getBoundingClientRect();
-      if (r.width > 0) setStageSize({ w: Math.round(r.width), h: Math.round(r.height) });
+      const w = Math.round(r.width);
+      const h = Math.round(r.height);
+      if (w > 0 && (stageSizeRef.current.w !== w || stageSizeRef.current.h !== h)) {
+        stageSizeRef.current = { w, h };
+        setStageSize({ w, h });
+      }
     };
     update();
     const ro = new ResizeObserver(update);
@@ -923,13 +940,14 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   const updateItem = (id, updates) => setLocalItems(prev => prev.map(it => it.id === id ? { ...it, ...updates } : it));
   const deleteItem = (id) => { setLocalItems(prev => prev.filter(it => it.id !== id)); setSelectedId(null); };
 
-  // Attach/detach Transformer whenever selection changes
+  // Attach/detach Transformer when selection changes.
+  // latestRef.current.items is always up-to-date without needing to be a dep.
   useEffect(() => {
     const tr = trRef.current;
     if (!tr) return;
-    const sel = localItems.find(i => i.id === selectedId);
     if (selectedId && nodeRefs.current[selectedId]) {
       tr.nodes([nodeRefs.current[selectedId]]);
+      const sel = latestRef.current.items.find(i => i.id === selectedId);
       tr.enabledAnchors(sel?.type === "text"
         ? []
         : ["top-left","top-center","top-right","middle-right","middle-left","bottom-left","bottom-center","bottom-right"]);
@@ -937,7 +955,7 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
       tr.nodes([]);
     }
     tr.getLayer()?.batchDraw();
-  }, [selectedId, localItems]);
+  }, [selectedId]);
 
   const eraseAt = useCallback((pctX, pctY) => {
     setLocalStrokes(prev => prev.filter(s =>
@@ -952,6 +970,7 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
     if (!stage) return;
     const pos = stage.getPointerPosition();
     if (!pos) return;
+    const { w: sW, h: sH } = stageSizeRef.current;
     if (tool === "draw") {
       isDrawingRef.current = true;
       const b = BRUSH_TYPES.find(x => x.id === brushType) || BRUSH_TYPES[0];
@@ -975,9 +994,9 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
       drawLayerRef.current?.batchDraw();
     } else if (tool === "erase") {
       isDrawingRef.current = true;
-      eraseAt((pos.x / stageSize.w) * 100, (pos.y / stageSize.h) * 100);
+      eraseAt((pos.x / sW) * 100, (pos.y / sH) * 100);
     }
-  }, [tool, penColor, penSize, brushType, stageSize, eraseAt]);
+  }, [tool, penColor, penSize, brushType, eraseAt]);
 
   const handleStagePointerMove = useCallback((e) => {
     if (!isDrawingRef.current) return;
@@ -989,18 +1008,20 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
       activeLineRef.current.points(activeLineRef.current.points().concat([pos.x, pos.y]));
       drawLayerRef.current?.batchDraw();
     } else if (tool === "erase") {
-      eraseAt((pos.x / stageSize.w) * 100, (pos.y / stageSize.h) * 100);
+      const { w: sW, h: sH } = stageSizeRef.current;
+      eraseAt((pos.x / sW) * 100, (pos.y / sH) * 100);
     }
-  }, [tool, stageSize, eraseAt]);
+  }, [tool, eraseAt]);
 
   const handleStagePointerUp = useCallback(() => {
     if (!isDrawingRef.current) return;
     isDrawingRef.current = false;
     if (tool === "draw" && activeLineRef.current && currentStrokeMetaRef.current) {
+      const { w: sW, h: sH } = stageSizeRef.current;
       const pixPts = activeLineRef.current.points();
       const pctPts = [];
       for (let i = 0; i < pixPts.length; i += 2) {
-        pctPts.push({ x: (pixPts[i] / stageSize.w) * 100, y: (pixPts[i + 1] / stageSize.h) * 100 });
+        pctPts.push({ x: (pixPts[i] / sW) * 100, y: (pixPts[i + 1] / sH) * 100 });
       }
       setLocalStrokes(prev => [...prev, { ...currentStrokeMetaRef.current, points: pctPts }]);
       activeLineRef.current.destroy();
@@ -1008,7 +1029,7 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
       drawLayerRef.current?.batchDraw();
       currentStrokeMetaRef.current = null;
     }
-  }, [tool, stageSize]);
+  }, [tool]);
 
   const handleUpload = async (e) => {
     const file = e.target.files?.[0];
