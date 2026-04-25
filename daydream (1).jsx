@@ -98,7 +98,8 @@ const _imgCache = {};
 function useKonvaImage(src) {
   const [img, setImg] = useState(() => _imgCache[src] || null);
   useEffect(() => {
-    if (!src || _imgCache[src]) return;
+    if (!src) return;
+    if (_imgCache[src]) { setImg(_imgCache[src]); return; }
     const el = new window.Image();
     el.crossOrigin = "anonymous";
     el.onload = () => { _imgCache[src] = el; setImg(el); };
@@ -823,7 +824,8 @@ function CreateCollage({ onClose, onSave, photoImages }) {
   const [title, setTitle] = useState("");
 
   const save = () => {
-    const bg = PAGE_BGS[Math.floor(Math.random() * (PAGE_BGS.length - 1))]; // skip dark bg as default
+    const idx = Math.floor(Math.random() * (PAGE_BGS.length - 1)); // exclude dark bg at index 4
+    const bg = PAGE_BGS[idx >= 4 ? idx + 1 : idx];
     onSave({
       type: "collage",
       title: title.trim() || "untitled collage",
@@ -1024,11 +1026,14 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
         pctPts.push({ x: (pixPts[i] / sW) * 100, y: (pixPts[i + 1] / sH) * 100 });
       }
       setLocalStrokes(prev => [...prev, { ...currentStrokeMetaRef.current, points: pctPts }]);
+    }
+    // Always clean up the in-progress Konva line (handles tool-change mid-stroke too)
+    if (activeLineRef.current) {
       activeLineRef.current.destroy();
       activeLineRef.current = null;
       drawLayerRef.current?.batchDraw();
-      currentStrokeMetaRef.current = null;
     }
+    currentStrokeMetaRef.current = null;
   }, [tool]);
 
   const handleUpload = async (e) => {
@@ -2344,6 +2349,7 @@ async function exportPageAsPDF(element, filename = "page") {
   if (!element) throw new Error("no element");
   await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
   await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+  if (!window.html2canvas || !window.jspdf) throw new Error("PDF libraries failed to load — check network connection");
   const html2canvas = window.html2canvas;
   const { jsPDF } = window.jspdf;
 
