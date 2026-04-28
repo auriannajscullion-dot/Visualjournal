@@ -98,11 +98,14 @@ const _imgCache = {};
 function useKonvaImage(src) {
   const [img, setImg] = useState(() => _imgCache[src] || null);
   useEffect(() => {
-    if (!src || _imgCache[src]) return;
+    if (!src) return;
+    if (_imgCache[src]) { setImg(_imgCache[src]); return; }
+    let cancelled = false;
     const el = new window.Image();
     el.crossOrigin = "anonymous";
-    el.onload = () => { _imgCache[src] = el; setImg(el); };
+    el.onload = () => { _imgCache[src] = el; if (!cancelled) setImg(el); };
     el.src = src;
+    return () => { cancelled = true; };
   }, [src]);
   return img;
 }
@@ -934,7 +937,7 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   useEffect(() => {
     const t = setTimeout(() => onUpdate(latestRef.current), 400);
     return () => clearTimeout(t);
-  }, [localItems, localStrokes, localCaption]);
+  }, [localItems, localStrokes, localCaption, onUpdate]);
 
   const addItem = (item) => setLocalItems(prev => [...prev, { id: uid(), ...item }]);
   const updateItem = (id, updates) => setLocalItems(prev => prev.map(it => it.id === id ? { ...it, ...updates } : it));
@@ -1064,6 +1067,7 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   const handleExport = async () => {
     setSelectedId(null); // hide controls overlay before capture
     setExportStatus("busy");
+    await new Promise(r => setTimeout(r, 50)); // let React + Konva redraw without selection handles
     try {
       await exportPageAsPDF(pageRef.current, entry.title || "collage");
       setExportStatus("done");
