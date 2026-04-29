@@ -37,6 +37,8 @@ function Root() {
     supabase.auth.getSession().then(({ data }) => {
       applySession(data.session, "INITIAL");
       if (mounted) setLoading(false);
+    }).catch(() => {
+      if (mounted) setLoading(false);
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {

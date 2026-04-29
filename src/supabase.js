@@ -135,7 +135,10 @@ function extFor(file) {
   const dot = name.lastIndexOf(".");
   if (dot >= 0 && dot < name.length - 1) return name.slice(dot + 1).toLowerCase();
   const type = file.type || "";
-  if (type.startsWith("image/")) return type.slice(6);
+  if (type.startsWith("image/")) {
+    const ext = type.slice(6);
+    if (ext) return ext;
+  }
   return "png";
 }
 

@@ -86,8 +86,8 @@ const PAGE_BGS = [
   "linear-gradient(135deg, #fff4e6 0%, #ffe6f5 100%)",
   "linear-gradient(135deg, #e6f9ff 0%, #f0e6ff 100%)",
   "linear-gradient(135deg, #ffe6f0 0%, #e6ffe8 100%)",
-  "linear-gradient(135deg, #4a2e7a 0%, #6b4aa8 100%)",
   "linear-gradient(135deg, #ffffff 0%, #ffe6f5 100%)",
+  "linear-gradient(135deg, #4a2e7a 0%, #6b4aa8 100%)", // dark — kept last so random default skips it
 ];
 
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -931,8 +931,10 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   // Debounced flush to parent — kept in ref so latest values are always sent
   const latestRef = useRef({ items: localItems, strokes: localStrokes, caption: localCaption });
   latestRef.current = { items: localItems, strokes: localStrokes, caption: localCaption };
+  const onUpdateRef = useRef(onUpdate);
+  onUpdateRef.current = onUpdate;
   useEffect(() => {
-    const t = setTimeout(() => onUpdate(latestRef.current), 400);
+    const t = setTimeout(() => onUpdateRef.current(latestRef.current), 400);
     return () => clearTimeout(t);
   }, [localItems, localStrokes, localCaption]);
 
@@ -2345,7 +2347,8 @@ async function exportPageAsPDF(element, filename = "page") {
   await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
   await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
   const html2canvas = window.html2canvas;
-  const { jsPDF } = window.jspdf;
+  const { jsPDF } = window.jspdf ?? {};
+  if (!html2canvas || !jsPDF) throw new Error("pdf export libraries failed to load");
 
   const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: null });
   const imgData = canvas.toDataURL("image/jpeg", 0.92);
