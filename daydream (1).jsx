@@ -233,10 +233,19 @@ export default function App({ session }) {
 
       <div className="relative z-10 max-w-xl md:max-w-6xl mx-auto pb-36">
         <Header />
-        {view === "feed" && (
+        {loading ? (
+          <div className="flex items-center justify-center py-24">
+            <p className="italic" style={{color: "#7a5aa8", fontFamily: "'Caveat', cursive", fontSize: "20px"}}>
+              ✦ loading your journal ✦
+            </p>
+          </div>
+        ) : loadError ? (
+          <div className="text-center py-24 px-6">
+            <p className="italic text-sm" style={{color: "#8a1b3a"}}>{loadError}</p>
+          </div>
+        ) : view === "feed" ? (
           <FeedView entries={entries} onOpen={setOpenEntry} filter={filter} setFilter={setFilter} />
-        )}
-        {view === "scrapbook" && (
+        ) : (
           <ScrapbookView
             entries={scrapbookEntries}
             onOpen={(e) => setEditingScrapbookEntry(e)}
