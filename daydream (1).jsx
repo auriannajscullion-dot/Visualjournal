@@ -892,6 +892,12 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   const trRef = useRef(null);            // Konva Transformer
   const nodeRefs = useRef({});           // item.id → Konva node
   const fileInputRef = useRef(null);
+  const saveTimerRef = useRef(null);
+  const exportTimerRef = useRef(null);
+  useEffect(() => () => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    if (exportTimerRef.current) clearTimeout(exportTimerRef.current);
+  }, []);
   const isDrawingRef = useRef(false);
   const activeLineRef = useRef(null);    // imperative Konva.Line during a draw stroke
   const currentStrokeMetaRef = useRef(null);
@@ -926,6 +932,7 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
     setLocalItems(entry.items || []);
     setLocalStrokes(entry.strokes || []);
     setLocalCaption(entry.caption || "");
+    setSelectedId(null);
   }, [entry.id]);
 
   // Debounced flush to parent — kept in ref so latest values are always sent
@@ -1016,14 +1023,17 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   const handleStagePointerUp = useCallback(() => {
     if (!isDrawingRef.current) return;
     isDrawingRef.current = false;
-    if (tool === "draw" && activeLineRef.current && currentStrokeMetaRef.current) {
-      const { w: sW, h: sH } = stageSizeRef.current;
-      const pixPts = activeLineRef.current.points();
-      const pctPts = [];
-      for (let i = 0; i < pixPts.length; i += 2) {
-        pctPts.push({ x: (pixPts[i] / sW) * 100, y: (pixPts[i + 1] / sH) * 100 });
+    if (activeLineRef.current) {
+      // Commit the stroke only if tool is still "draw" when pointer lifts
+      if (tool === "draw" && currentStrokeMetaRef.current) {
+        const { w: sW, h: sH } = stageSizeRef.current;
+        const pixPts = activeLineRef.current.points();
+        const pctPts = [];
+        for (let i = 0; i < pixPts.length; i += 2) {
+          pctPts.push({ x: (pixPts[i] / sW) * 100, y: (pixPts[i + 1] / sH) * 100 });
+        }
+        setLocalStrokes(prev => [...prev, { ...currentStrokeMetaRef.current, points: pctPts }]);
       }
-      setLocalStrokes(prev => [...prev, { ...currentStrokeMetaRef.current, points: pctPts }]);
       activeLineRef.current.destroy();
       activeLineRef.current = null;
       drawLayerRef.current?.batchDraw();
@@ -1053,7 +1063,8 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
     setSaveStatus("saving");
     onUpdate({ items: localItems, strokes: localStrokes, caption: localCaption });
     setSaveStatus("saved");
-    setTimeout(() => setSaveStatus(null), 2000);
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => setSaveStatus(null), 2000);
   };
 
   const handleClose = () => {
@@ -1067,7 +1078,8 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
     try {
       await exportPageAsPDF(pageRef.current, entry.title || "collage");
       setExportStatus("done");
-      setTimeout(() => setExportStatus(null), 2000);
+      if (exportTimerRef.current) clearTimeout(exportTimerRef.current);
+      exportTimerRef.current = setTimeout(() => setExportStatus(null), 2000);
     } catch (err) {
       console.error(err);
       setExportStatus(null);
@@ -1582,6 +1594,8 @@ function JournalEditor({ entry, onClose, onSave, onDelete, photoImages }) {
   const [exportStatus, setExportStatus] = useState(null);
   const fileInputRef = useRef(null);
   const pageRef = useRef(null);
+  const exportTimerRef = useRef(null);
+  useEffect(() => () => { if (exportTimerRef.current) clearTimeout(exportTimerRef.current); }, []);
 
   const addImage = (src) => { setImages([...images, src]); setShowImagePicker(false); };
   const removeImage = (i) => setImages(images.filter((_, idx) => idx !== i));
@@ -1619,7 +1633,8 @@ function JournalEditor({ entry, onClose, onSave, onDelete, photoImages }) {
     try {
       await exportPageAsPDF(pageRef.current, title || "journal");
       setExportStatus("done");
-      setTimeout(() => setExportStatus(null), 2000);
+      if (exportTimerRef.current) clearTimeout(exportTimerRef.current);
+      exportTimerRef.current = setTimeout(() => setExportStatus(null), 2000);
     } catch (err) {
       console.error(err);
       setExportStatus(null);
