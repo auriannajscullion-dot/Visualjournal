@@ -98,7 +98,8 @@ const _imgCache = {};
 function useKonvaImage(src) {
   const [img, setImg] = useState(() => _imgCache[src] || null);
   useEffect(() => {
-    if (!src || _imgCache[src]) return;
+    if (!src) return;
+    if (_imgCache[src]) { setImg(_imgCache[src]); return; }
     const el = new window.Image();
     el.crossOrigin = "anonymous";
     el.onload = () => { _imgCache[src] = el; setImg(el); };
@@ -798,7 +799,7 @@ function CoverPicker({ coverPhoto, setCoverPhoto, availableImages, entryType, da
         {availableImages.map((img, i) => {
           const selected = coverPhoto === img;
           return (
-            <button key={i} onClick={() => setCoverPhoto(img)}
+            <button key={`${i}-${img}`} onClick={() => setCoverPhoto(img)}
               className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden transition"
               style={{
                 border: selected ? "2px solid #ff6ec7" : "1px solid rgba(255,255,255,0.2)",
@@ -1272,8 +1273,8 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
               <p className="text-xs text-white/60 italic p-3">no photos yet — upload or add one from the feed's + button!</p>
             ) : (
               <div className="grid grid-cols-4 gap-2">
-                {photoImages.map((src, i) => (
-                  <button key={i} onClick={() => {
+                {photoImages.map((src) => (
+                  <button key={src} onClick={() => {
                     addItem({ type: "image", src, x: rand(15, 55), y: rand(20, 55), w: rand(32, 48), rotation: rand(-15, 15) });
                     setShowImagePicker(false);
                   }} className="aspect-square rounded-xl overflow-hidden transition hover:scale-105"
@@ -1290,8 +1291,8 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
           <div className="mt-3 rounded-2xl p-3 slide-in glass">
             <p className="mb-2 px-1 text-white/80" style={{fontFamily: "'VT323', monospace", fontSize: "14px", letterSpacing: "0.1em", textTransform: "uppercase"}}>▸ tap to add:</p>
             <div className="flex flex-wrap gap-1">
-              {STICKERS.map((s, i) => (
-                <button key={i} onClick={() => {
+              {STICKERS.map((s) => (
+                <button key={s} onClick={() => {
                   addItem({ type: "sticker", content: s, x: rand(20, 70), y: rand(20, 70), size: rand(40, 72), rotation: rand(-20, 20) });
                   setShowStickers(false);
                 }} className="w-10 h-10 rounded-xl hover:bg-white/10 text-2xl flex items-center justify-center transition">{s}</button>
@@ -1583,7 +1584,7 @@ function JournalEditor({ entry, onClose, onSave, onDelete, photoImages }) {
   const fileInputRef = useRef(null);
   const pageRef = useRef(null);
 
-  const addImage = (src) => { setImages([...images, src]); setShowImagePicker(false); };
+  const addImage = (src) => { setImages(prev => [...prev, src]); setShowImagePicker(false); };
   const removeImage = (i) => setImages(images.filter((_, idx) => idx !== i));
   const handleFile = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
@@ -1675,7 +1676,7 @@ function JournalEditor({ entry, onClose, onSave, onDelete, photoImages }) {
               {images.length > 0 && (
                 <div className="mt-5 space-y-3">
                   {images.map((src, i) => (
-                    <div key={i} className="relative rounded-xl overflow-hidden group" style={{boxShadow: "0 4px 12px rgba(0,0,0,0.15)"}}>
+                    <div key={`${i}-${src}`} className="relative rounded-xl overflow-hidden group" style={{boxShadow: "0 4px 12px rgba(0,0,0,0.15)"}}>
                       <img src={src} alt="" className="w-full block" />
                       <button onClick={() => removeImage(i)}
                         className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
@@ -1703,8 +1704,8 @@ function JournalEditor({ entry, onClose, onSave, onDelete, photoImages }) {
               <p className="text-xs text-white/50 italic p-3">no photos yet</p>
             ) : (
               <div className="grid grid-cols-4 gap-2">
-                {photoImages.map((src, i) => (
-                  <button key={i} onClick={() => addImage(src)}
+                {photoImages.map((src) => (
+                  <button key={src} onClick={() => addImage(src)}
                     className="aspect-square rounded-xl overflow-hidden transition hover:scale-105"
                     style={{boxShadow: "0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.15)"}}>
                     <img src={src} alt="" className="w-full h-full object-cover" />
@@ -2072,7 +2073,7 @@ function StepPhotos({ data, update, photoImages }) {
       {data.images.length > 0 && (
         <div className="grid grid-cols-3 gap-2 mb-4">
           {data.images.map((src, i) => (
-            <div key={i} className="relative aspect-square rounded-xl overflow-hidden group">
+            <div key={`${i}-${src}`} className="relative aspect-square rounded-xl overflow-hidden group">
               <img src={src} alt="" className="w-full h-full object-cover" />
               <button onClick={() => removeImg(i)}
                 className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/70 flex items-center justify-center">
@@ -2096,8 +2097,8 @@ function StepPhotos({ data, update, photoImages }) {
         <div className="mb-4">
           <StepLabel>or pick from album</StepLabel>
           <div className="grid grid-cols-4 gap-2">
-            {photoImages.map((src, i) => (
-              <button key={i} onClick={() => update({ images: [...data.images, src] })}
+            {photoImages.map((src) => (
+              <button key={src} onClick={() => update({ images: [...data.images, src] })}
                 className="aspect-square rounded-xl overflow-hidden transition hover:scale-105"
                 style={{boxShadow: "0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.15)"}}>
                 <img src={src} alt="" className="w-full h-full object-cover" />
@@ -2227,7 +2228,7 @@ function JournalView({ entry, onEdit }) {
         {entry.images?.length > 0 && (
           <div className="space-y-2 mt-4">
             {entry.images.map((src, i) => (
-              <img key={i} src={src} alt="" className="w-full rounded-lg" style={{boxShadow: "0 2px 8px rgba(0,0,0,0.1)"}} />
+              <img key={`${i}-${src}`} src={src} alt="" className="w-full rounded-lg" style={{boxShadow: "0 2px 8px rgba(0,0,0,0.1)"}} />
             ))}
           </div>
         )}
@@ -2306,7 +2307,7 @@ function CheckinView({ entry, onDelete }) { /* lighter view */
       {entry.images?.length > 0 && (
         <div className="grid grid-cols-3 gap-2 mb-5">
           {entry.images.map((src, i) => (
-            <img key={i} src={src} alt="" className="aspect-square object-cover rounded-xl"
+            <img key={`${i}-${src}`} src={src} alt="" className="aspect-square object-cover rounded-xl"
               style={{boxShadow: "0 4px 12px rgba(91,58,138,0.25)"}} />
           ))}
         </div>
