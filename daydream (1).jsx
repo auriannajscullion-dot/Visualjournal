@@ -95,16 +95,30 @@ const uid = () => (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.r
 
 // Module-level image cache so loaded images persist across re-renders
 const _imgCache = {};
+const _imgErrorCache = new Set();
+// Returns { img, error } where img is a loaded HTMLImageElement or null while loading.
+// All images are fetched with crossOrigin="anonymous" so the browser cache stores a
+// CORS-enabled copy, which Konva can read without tainting the canvas.
 function useKonvaImage(src) {
-  const [img, setImg] = useState(() => _imgCache[src] || null);
+  const [state, setState] = useState(() => ({
+    img: _imgCache[src] || null,
+    error: _imgErrorCache.has(src),
+  }));
   useEffect(() => {
-    if (!src || _imgCache[src]) return;
+    if (!src || _imgCache[src] || _imgErrorCache.has(src)) return;
     const el = new window.Image();
     el.crossOrigin = "anonymous";
-    el.onload = () => { _imgCache[src] = el; setImg(el); };
+    el.onload = () => {
+      _imgCache[src] = el;
+      setState({ img: el, error: false });
+    };
+    el.onerror = () => {
+      _imgErrorCache.add(src);
+      setState({ img: null, error: true });
+    };
     el.src = src;
   }, [src]);
-  return img;
+  return state;
 }
 
 const todayDate = () => {
@@ -1299,7 +1313,7 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
                     setShowImagePicker(false);
                   }} className="aspect-square rounded-xl overflow-hidden transition hover:scale-105"
                     style={{boxShadow: "0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.15)"}}>
-                    <img src={src} alt="" className="w-full h-full object-cover" />
+                    <img src={src} alt="" className="w-full h-full object-cover" crossOrigin="anonymous" />
                   </button>
                 ))}
               </div>
@@ -1460,7 +1474,7 @@ function KonvaCollageItem({ item, stageW, stageH, isSelected, onSelect, onUpdate
 
 // Image item: white card frame rendered with KonvaRect + KonvaImage inside a KonvaGroup.
 function KonvaImageCard({ item, stageW, stageH, x, y, rot, draggable, isSelected, onDragEnd, onClick, onTap, onUpdate, onNodeRef }) {
-  const img = useKonvaImage(item.src);
+  const { img, error } = useKonvaImage(item.src);
   const groupRef = useRef(null);
 
   useEffect(() => {
@@ -1470,7 +1484,7 @@ function KonvaImageCard({ item, stageW, stageH, x, y, rot, draggable, isSelected
 
   const PAD = 6;
   const w = ((item.w || 35) / 100) * stageW;
-  const aspect = img ? img.naturalWidth / img.naturalHeight : 1;
+  const aspect = img ? img.naturalWidth / img.naturalHeight : 4 / 3;
   const h = w / aspect;
 
   return (
@@ -1500,8 +1514,14 @@ function KonvaImageCard({ item, stageW, stageH, x, y, rot, draggable, isSelected
         stroke={isSelected ? "#ff6ec7" : undefined}
         strokeWidth={isSelected ? 2 : 0}
       />
-      {img && (
+      {img ? (
         <KonvaImage image={img} x={PAD} y={PAD} width={w} height={h} cornerRadius={2} />
+      ) : error ? (
+        // Broken-image placeholder
+        <KonvaRect x={PAD} y={PAD} width={w} height={h} fill="#f5e0ff" cornerRadius={2} />
+      ) : (
+        // Loading placeholder
+        <KonvaRect x={PAD} y={PAD} width={w} height={h} fill="#ede0ff" cornerRadius={2} />
       )}
     </KonvaGroup>
   );
