@@ -852,29 +852,23 @@ function ScrapbookPage({ entry, typeColor, TypeIcon, typeLabel, onEdit, onDelete
 // ── Collage page: full static canvas preview ─────────────────
 function ScrapbookCollagePage({ entry }) {
   return (
-    <div style={{display: "flex", flexDirection: "column", height: "100%"}}>
-      {/* Title + caption — fixed height, don't grow */}
-      <div className="flex-shrink-0 px-4 pt-3 pb-1">
-        <h2 className="iridescent-text" style={{fontFamily: "'Pacifico', cursive", fontSize: "20px", lineHeight: 1.15, margin: 0}}>
-          {entry.title}
-        </h2>
-        {entry.caption && (
-          <p className="italic text-sm mt-0.5 mb-0" style={{color: "#7a5aa8"}}>{entry.caption}</p>
-        )}
-      </div>
-
-      {/* Preview area — takes all remaining height, centers the portrait canvas */}
-      <div style={{flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "8px 16px"}}>
-        {/* Height-driven: fills available height, width computed from 3:4 ratio, never overflows width */}
-        <div className="relative rounded-2xl overflow-hidden"
-          style={{
-            height: "100%",
-            width: "auto",
-            aspectRatio: "3/4",
-            maxWidth: "100%",
-            background: entry.bg || "#f0e8ff",
-            boxShadow: "0 6px 24px rgba(80,40,130,0.2), inset 0 0 0 1px rgba(255,255,255,0.4)",
-          }}>
+    <div className="px-4 pt-3 pb-2">
+      <h2 className="mb-1 iridescent-text" style={{fontFamily: "'Pacifico', cursive", fontSize: "20px", lineHeight: 1.15}}>
+        {entry.title}
+      </h2>
+      {entry.caption && (
+        <p className="mb-2 italic text-sm" style={{color: "#7a5aa8"}}>{entry.caption}</p>
+      )}
+      <div className="relative rounded-2xl overflow-hidden"
+        style={{
+          height: "calc(100vh - 300px)",
+          width: "auto",
+          aspectRatio: "3/4",
+          maxWidth: "100%",
+          margin: "0 auto",
+          background: entry.bg || "#f0e8ff",
+          boxShadow: "0 6px 24px rgba(80,40,130,0.2), inset 0 0 0 1px rgba(255,255,255,0.4)",
+        }}>
           {(entry.items || []).map(item => (
             <div key={item.id} style={{
               position: "absolute", left: `${item.x}%`, top: `${item.y}%`,
@@ -905,7 +899,6 @@ function ScrapbookCollagePage({ entry }) {
             ))}
           </svg>
         </div>
-      </div>
     </div>
   );
 }
