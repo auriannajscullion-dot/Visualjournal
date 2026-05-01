@@ -328,6 +328,10 @@ function GlobalStyles() {
       @keyframes shimmer { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
       @keyframes slidein { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
       @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes pageFromRight { from { opacity:0; transform:translateX(56px) scale(0.98); } to { opacity:1; transform:translateX(0) scale(1); } }
+      @keyframes pageFromLeft  { from { opacity:0; transform:translateX(-56px) scale(0.98); } to { opacity:1; transform:translateX(0) scale(1); } }
+      .page-from-right { animation: pageFromRight 0.33s cubic-bezier(0.22,1,0.36,1) both; }
+      .page-from-left  { animation: pageFromLeft  0.33s cubic-bezier(0.22,1,0.36,1) both; }
       .iridescent { background: linear-gradient(110deg, #ff6ec7 0%, #ff8fc4 10%, #d49bff 22%, #a78bfa 34%, #8fa5ff 42%, #60e5ff 50%, #8fa5ff 58%, #a78bfa 66%, #d49bff 78%, #ff8fc4 90%, #ff6ec7 100%); background-size: 200% 100%; animation: shimmer 10s linear infinite; }
       .iridescent-text { background: linear-gradient(110deg, #ff6ec7 0%, #ff8fc4 10%, #d49bff 22%, #a78bfa 34%, #8fa5ff 42%, #60e5ff 50%, #8fa5ff 58%, #a78bfa 66%, #d49bff 78%, #ff8fc4 90%, #ff6ec7 100%); background-size: 200% 100%; animation: shimmer 8s linear infinite; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
       .slide-in { animation: slidein 0.4s ease-out; }
@@ -580,79 +584,360 @@ function GeneratedCover({ entryType, date }) {
 // ============================================================
 // SCRAPBOOK VIEW — shows only non-photo entries
 // ============================================================
-function ScrapbookView({ entries, onOpen, onDelete, onNewCompose }) {
+// ── accent meta per entry type ──────────────────────────────
+const TYPE_META = {
+  collage: { label: "collage",   color: "#A78BFA", Icon: Layers },
+  journal: { label: "journal",   color: "#FFD166", Icon: FileText },
+  checkin: { label: "check-in",  color: "#60E5FF", Icon: ClipboardCheck },
+};
+
+// ============================================================
+// SCRAPBOOK VIEW — book-like one-page-at-a-time experience
+// ============================================================
+function ScrapbookView({ entries, onOpen, onDelete }) {
+  const [page, setPage] = useState(0);
+  const [dir, setDir]   = useState(1);   // 1 = sliding in from right, -1 = from left
+  const [animKey, setAnimKey] = useState(0);
+  const touchRef = useRef(null);
+
+  // Keep page in bounds whenever entries array length changes (e.g. after delete)
+  useEffect(() => {
+    setPage(p => Math.min(p, Math.max(0, entries.length - 1)));
+  }, [entries.length]);
+
+  // Jump to page 0 when a brand-new entry appears at the front
+  const firstId = entries[0]?.id;
+  const prevFirstId = useRef(firstId);
+  useEffect(() => {
+    if (prevFirstId.current !== firstId && firstId) {
+      prevFirstId.current = firstId;
+      goTo(0, -1);
+    }
+  });
+
+  const goTo = useCallback((idx, direction = 1) => {
+    const clamped = Math.max(0, Math.min(entries.length - 1, idx));
+    setDir(direction);
+    setPage(clamped);
+    setAnimKey(k => k + 1);
+  }, [entries.length]);
+
+  const prev = () => { if (page > 0) goTo(page - 1, -1); };
+  const next = () => { if (page < entries.length - 1) goTo(page + 1, 1); };
+
+  // Touch swipe — only trigger if dx > dy (horizontal gesture)
+  const onTouchStart = (e) => {
+    touchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+  const onTouchEnd = (e) => {
+    if (!touchRef.current) return;
+    const dx = e.changedTouches[0].clientX - touchRef.current.x;
+    const dy = e.changedTouches[0].clientY - touchRef.current.y;
+    touchRef.current = null;
+    if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+    if (dx > 0) prev(); else next();
+  };
+
+  if (entries.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+        <p className="italic mb-2" style={{color: "#7a5aa8", fontFamily: "'Caveat', cursive", fontSize: "26px"}}>
+          your scrapbook is empty ✦
+        </p>
+        <p style={{color: "#9b78c8", fontFamily: "'Caveat', cursive", fontSize: "18px"}}>
+          tap + to start your first page
+        </p>
+      </div>
+    );
+  }
+
+  const safePage = Math.min(page, entries.length - 1);
+  const entry = entries[safePage];
+  const total = entries.length;
+  const { color: typeColor, Icon: TypeIcon, label: typeLabel } = TYPE_META[entry.type] || TYPE_META.collage;
+
   return (
-    <div className="px-4 pt-2">
-      <div className="flex items-center justify-between mb-4">
+    <div className="px-2 pb-2 flex flex-col">
+      {/* ── Top bar: page counter + (TOC toggle added in step 2) ── */}
+      <div className="flex items-center justify-end mb-3 px-2">
+        <span style={{fontFamily: "'VT323', monospace", fontSize: "20px", color: "#c5a0f0", letterSpacing: "0.1em"}}>
+          {safePage + 1} / {total}
+        </span>
+      </div>
+
+      {/* ── Page + left/right arrows ── */}
+      <div className="relative flex items-center gap-2"
+        onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+
+        {/* Left arrow — desktop only */}
+        <button onClick={prev} disabled={safePage === 0}
+          className="hidden md:flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 transition hover:bg-white/10 disabled:opacity-20"
+          style={{color: "rgba(255,255,255,0.85)"}}>
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+
+        {/* The page */}
+        <div className="flex-1 overflow-hidden rounded-[22px]"
+          style={{maxHeight: "72vh", boxShadow: "0 12px 48px rgba(80,40,130,0.3), 0 2px 8px rgba(80,40,130,0.15)"}}>
+          <div
+            key={animKey}
+            className={`h-full overflow-y-auto rounded-[22px] ${dir > 0 ? "page-from-right" : "page-from-left"}`}
+            style={{background: "linear-gradient(160deg, #fffefe 0%, #fef8ff 50%, #f8fdff 100%)"}}>
+            <ScrapbookPage
+              entry={entry}
+              typeColor={typeColor}
+              TypeIcon={TypeIcon}
+              typeLabel={typeLabel}
+              onEdit={() => onOpen(entry)}
+              onDelete={() => {
+                if (window.confirm("delete this page?")) onDelete(entry);
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Right arrow — desktop only */}
+        <button onClick={next} disabled={safePage === entries.length - 1}
+          className="hidden md:flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 transition hover:bg-white/10 disabled:opacity-20"
+          style={{color: "rgba(255,255,255,0.85)"}}>
+          <ChevronRight className="w-6 h-6" />
+        </button>
+      </div>
+
+      {/* ── Progress bar ── */}
+      <div className="mt-3 px-2">
+        <div className="h-1 rounded-full overflow-hidden" style={{background: "rgba(255,255,255,0.15)"}}>
+          <div className="h-full rounded-full iridescent transition-all duration-400"
+            style={{width: `${((safePage + 1) / total) * 100}%`}} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Renders one entry as a physical-looking page
+function ScrapbookPage({ entry, typeColor, TypeIcon, typeLabel, onEdit, onDelete }) {
+  return (
+    <div className="flex flex-col" style={{minHeight: "100%"}}>
+      {/* Page header strip */}
+      <div className="flex items-center justify-between px-4 py-2.5 flex-shrink-0"
+        style={{borderBottom: `1.5px solid ${typeColor}28`, background: `${typeColor}0a`}}>
+        <div className="flex items-center gap-1.5">
+          <TypeIcon className="w-3.5 h-3.5" style={{color: typeColor}} />
+          <span style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.14em",
+            color: typeColor, textTransform: "uppercase"}}>{typeLabel}</span>
+        </div>
         <div className="flex items-center gap-2">
-          <Book className="w-3.5 h-3.5 text-pink-300" />
-          <span style={{color: "#5b3a8a", fontFamily: "'VT323', monospace", fontSize: "14px", letterSpacing: "0.15em", textTransform: "uppercase"}}>
-            scrapbook · {entries.length} pages
+          <span style={{fontFamily: "'VT323', monospace", fontSize: "13px", color: "#9b6fb0", letterSpacing: "0.1em"}}>
+            {entry.date}
           </span>
+          <button onClick={onDelete}
+            className="w-6 h-6 rounded-full flex items-center justify-center transition hover:bg-pink-100/60">
+            <Trash2 className="w-3 h-3" style={{color: "#c084d4"}} />
+          </button>
         </div>
       </div>
 
-      {entries.length === 0 ? (
-        <div className="text-center py-16 px-6">
-          <p className="italic mb-3" style={{color: "#7a5aa8", fontFamily: "'Caveat', cursive", fontSize: "24px"}}>
-            ✦ no pages yet ✦
-          </p>
-          <p className="text-sm" style={{color: "#7a5aa8"}}>tap the + button to start a new page</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          {entries.map((entry, i) => (
-            <ScrapbookThumb key={entry.id} entry={entry} index={i}
-              onClick={() => onOpen(entry)}
-              onDelete={() => onDelete(entry)} />
-          ))}
+      {/* Entry-type body */}
+      <div className="flex-1">
+        {entry.type === "collage" && <ScrapbookCollagePage entry={entry} />}
+        {entry.type === "journal" && <ScrapbookJournalPage entry={entry} />}
+        {entry.type === "checkin" && <ScrapbookCheckinPage entry={entry} />}
+      </div>
+
+      {/* Footer: editor button for collage + journal */}
+      {(entry.type === "collage" || entry.type === "journal") && (
+        <div className="px-4 pb-4 pt-2 flex-shrink-0">
+          <button onClick={onEdit}
+            className="w-full py-2.5 rounded-xl text-white text-sm iridescent"
+            style={{boxShadow: "0 4px 16px rgba(255,110,199,0.3)"}}>
+            {entry.type === "collage" ? "open in editor ✦" : "edit entry ✦"}
+          </button>
         </div>
       )}
     </div>
   );
 }
 
-function ScrapbookThumb({ entry, index, onClick, onDelete }) {
-  const tilt = [-2, 1.5, -1, 2.2, -1.5, 1][index % 6];
-  const cover = getCoverPhoto(entry);
-  const typeLabels = { collage: "collage", journal: "journal", checkin: "check-in" };
-  const typeColors = { collage: "#A78BFA", journal: "#FFD166", checkin: "#60E5FF" };
+// ── Collage page: full static canvas preview ─────────────────
+function ScrapbookCollagePage({ entry }) {
+  return (
+    <div className="p-4">
+      <h2 className="mb-1 iridescent-text" style={{fontFamily: "'Pacifico', cursive", fontSize: "22px", lineHeight: 1.1}}>
+        {entry.title}
+      </h2>
+      {entry.caption && (
+        <p className="mb-3 italic text-sm" style={{color: "#7a5aa8"}}>{entry.caption}</p>
+      )}
+      <div className="relative w-full rounded-2xl overflow-hidden"
+        style={{aspectRatio: "3/4", background: entry.bg || "#f0e8ff",
+          boxShadow: "0 6px 24px rgba(80,40,130,0.2), inset 0 0 0 1px rgba(255,255,255,0.4)"}}>
+        {(entry.items || []).map(item => (
+          <div key={item.id} style={{
+            position: "absolute", left: `${item.x}%`, top: `${item.y}%`,
+            transform: `rotate(${item.rotation || 0}deg)`, pointerEvents: "none",
+          }}>
+            {item.type === "image" && (
+              <div style={{width: `${item.w}%`, minWidth: 60, padding: 3,
+                background: "white", borderRadius: 4, boxShadow: "0 3px 10px rgba(0,0,0,0.2)"}}>
+                <img src={item.src} alt="" className="w-full block" style={{borderRadius: 2}}
+                  crossOrigin="anonymous" />
+              </div>
+            )}
+            {item.type === "sticker" && (
+              <div style={{fontSize: item.size, lineHeight: 1}}>{item.content}</div>
+            )}
+            {item.type === "text" && (
+              <div style={{fontFamily: "'Caveat', cursive", fontSize: 22, color: item.color,
+                maxWidth: 180, lineHeight: 1.2}}>{item.content}</div>
+            )}
+          </div>
+        ))}
+        <svg className="absolute inset-0 w-full h-full pointer-events-none"
+          viewBox="0 0 100 100" preserveAspectRatio="none">
+          {(entry.strokes || []).map(s => (
+            <polyline key={s.id} points={s.points.map(p => `${p.x},${p.y}`).join(" ")}
+              fill="none" stroke={s.color} strokeLinecap="round" strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke" style={{strokeWidth: s.size}} />
+          ))}
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+// ── Journal page: styled reading view ────────────────────────
+function ScrapbookJournalPage({ entry }) {
+  return (
+    <div className="p-5 relative" style={{minHeight: "100%",
+      background: "linear-gradient(160deg, #fffdf8 0%, #fff9fe 100%)"}}>
+      {/* ruled-line watermark */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{opacity: 0.035,
+          backgroundImage: "repeating-linear-gradient(0deg,#3d1b6b,#3d1b6b 1px,transparent 1px,transparent 28px)",
+          backgroundSize: "100% 28px"}} />
+      <div className="relative">
+        <h1 style={{fontFamily: "'Pacifico', cursive", fontSize: "26px", color: "#3D1F66",
+          lineHeight: 1.15, marginBottom: 4}}>
+          {entry.title || "untitled"}
+        </h1>
+        <p className="mb-4" style={{fontFamily: "'VT323', monospace", fontSize: "13px",
+          color: "#9b6fb0", letterSpacing: "0.12em"}}>
+          ▸ {entry.time || ""}
+          {entry.mood && <span className="ml-2">{entry.mood}</span>}
+        </p>
+        <p className="whitespace-pre-wrap mb-5"
+          style={{color: "#3D2660", lineHeight: 1.8, fontSize: "15px",
+            fontFamily: "'Space Grotesk', sans-serif"}}>
+          {entry.body || <em style={{opacity: 0.5}}>no writing yet</em>}
+        </p>
+        {entry.images?.length > 0 && (
+          <div className="space-y-3 mt-4">
+            {entry.images.map((src, i) => (
+              <img key={i} src={src} alt="" className="w-full rounded-xl"
+                style={{boxShadow: "0 4px 14px rgba(0,0,0,0.1)"}} crossOrigin="anonymous" />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Check-in page: full scores + chips + text sections ───────
+function ScrapbookCheckinPage({ entry }) {
+  const sections = [
+    { label: "carrying forward", value: entry.carry,          highlight: true },
+    { label: "releasing",        value: entry.release,        highlight: true },
+    { label: "body notes",       value: entry.bodyNotes },
+    { label: "mind notes",       value: entry.mindNote },
+    { label: "career & practice",value: entry.career },
+    { label: "credentials",      value: entry.credentials },
+    { label: "creative notes",   value: entry.creativeNotes },
+    { label: "vibe notes",       value: entry.vibeNotes },
+    { label: "free space",       value: entry.freewrite },
+  ].filter(s => s.value?.trim());
 
   return (
-    <div className="relative slide-in group"
-      style={{transform: `rotate(${tilt}deg)`, transition: "transform 0.3s"}}
-      onMouseEnter={e => e.currentTarget.style.transform = `rotate(${tilt/2}deg) translateY(-2px) scale(1.02)`}
-      onMouseLeave={e => e.currentTarget.style.transform = `rotate(${tilt}deg)`}>
-      <div className="absolute -inset-0.5 rounded-2xl iridescent opacity-50 blur-sm group-hover:opacity-90 transition" />
-      <div onClick={onClick} className="relative rounded-2xl overflow-hidden cursor-pointer" style={{aspectRatio: "3/4", boxShadow: "0 10px 30px rgba(0,0,0,0.3)"}}>
-        {cover.type === "image"
-          ? <img src={cover.src} alt="" className="w-full h-full object-cover" crossOrigin="anonymous" />
-          : <GeneratedCover entryType={cover.entryType} date={cover.date} />}
-        <div className="absolute inset-0 pointer-events-none" style={{background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%)"}} />
-        <div className="absolute bottom-2 left-2 right-2">
-          <div className="flex items-center justify-between text-[10px]">
-            <span className="text-white/90" style={{fontFamily: "'VT323', monospace", fontSize: "12px", letterSpacing: "0.1em"}}>
-              ▸ {entry.date}
-            </span>
-            <span className="px-1.5 py-0.5 rounded-full text-white"
-              style={{
-                background: "rgba(0,0,0,0.6)",
-                border: `1px solid ${typeColors[entry.type]}80`,
-                fontFamily: "'VT323', monospace", fontSize: "10px", letterSpacing: "0.1em",
-                color: typeColors[entry.type],
-              }}>
-              {typeLabels[entry.type]}
-            </span>
-          </div>
+    <div className="p-5" style={{background: "linear-gradient(160deg,#eef5ff 0%,#f7e8ff 60%,#e8f8ff 100%)"}}>
+      {/* Score cards */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="p-3 rounded-2xl"
+          style={{background: "rgba(184,255,107,0.22)", border: "1px solid rgba(120,180,60,0.35)"}}>
+          <p style={{color: "#4e7a1f", fontFamily: "'VT323', monospace", fontSize: "12px",
+            letterSpacing: "0.1em", textTransform: "uppercase"}}>body</p>
+          <p style={{color: "#4e7a1f", fontFamily: "'VT323', monospace", fontSize: "28px", fontWeight: 700}}>
+            {entry.bodyScore || "—"}<span style={{fontSize: "12px", opacity: 0.5}}> / 5</span>
+          </p>
+        </div>
+        <div className="p-3 rounded-2xl"
+          style={{background: "rgba(255,209,102,0.22)", border: "1px solid rgba(200,150,60,0.35)"}}>
+          <p style={{color: "#8a5a1a", fontFamily: "'VT323', monospace", fontSize: "12px",
+            letterSpacing: "0.1em", textTransform: "uppercase"}}>mind</p>
+          <p style={{color: "#8a5a1a", fontFamily: "'VT323', monospace", fontSize: "28px", fontWeight: 700}}>
+            {entry.mindScore || "—"}<span style={{fontSize: "12px", opacity: 0.5}}> / 5</span>
+          </p>
         </div>
       </div>
-      {/* Delete button — visible on hover */}
-      <button
-        onClick={(e) => { e.stopPropagation(); if (window.confirm("delete this page?")) onDelete(); }}
-        className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition z-10"
-        style={{background: "rgba(30,15,55,0.85)", backdropFilter: "blur(6px)"}}>
-        <Trash2 className="w-3 h-3 text-pink-300" />
-      </button>
+
+      {/* Mood chips */}
+      {entry.moods?.length > 0 && (
+        <div className="mb-4">
+          <p className="mb-1.5" style={{color: "#6b4aa8", fontFamily: "'VT323', monospace",
+            fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase"}}>▸ vibe</p>
+          <div className="flex flex-wrap gap-1.5">
+            {entry.moods.map((m, i) => (
+              <span key={i} className="px-2 py-0.5 rounded-full text-xs"
+                style={{background: "rgba(255,110,199,0.15)",
+                  border: "1px solid rgba(255,110,199,0.4)", color: "#8a2a6a"}}>{m}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Whimsy chips */}
+      {entry.whimsy?.length > 0 && (
+        <div className="mb-4">
+          <p className="mb-1.5" style={{color: "#6b4aa8", fontFamily: "'VT323', monospace",
+            fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase"}}>
+            ▸ whimsy ({entry.whimsy.length})
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {entry.whimsy.map((w, i) => (
+              <span key={i} className="px-2 py-0.5 rounded-full text-xs"
+                style={{background: "rgba(96,229,255,0.15)",
+                  border: "1px solid rgba(44,143,181,0.4)", color: "#1f5f7a"}}>{w}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Photos */}
+      {entry.images?.length > 0 && (
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          {entry.images.map((src, i) => (
+            <img key={i} src={src} alt="" className="aspect-square object-cover rounded-xl"
+              crossOrigin="anonymous"
+              style={{boxShadow: "0 2px 8px rgba(91,58,138,0.18)"}} />
+          ))}
+        </div>
+      )}
+
+      {/* Text sections */}
+      {sections.map((s, i) => (
+        <div key={i} className="mb-3"
+          style={{borderLeft: `2px solid ${s.highlight ? "#ff6ec7" : "rgba(167,139,250,0.35)"}`,
+            paddingLeft: 10}}>
+          <p style={{color: "#6b4aa8", fontFamily: "'VT323', monospace", fontSize: "11px",
+            letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2}}>
+            {s.label}
+          </p>
+          <p style={{color: s.highlight ? "#2d1b4e" : "#4a2e7a",
+            lineHeight: 1.65, fontSize: "14px", whiteSpace: "pre-wrap"}}>
+            {s.value}
+          </p>
+        </div>
+      ))}
     </div>
   );
 }
