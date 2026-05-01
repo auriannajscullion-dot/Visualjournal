@@ -802,8 +802,11 @@ function ScrapbookView({ entries, onOpen, onDelete }) {
 
 // Renders one entry as a physical-looking page
 function ScrapbookPage({ entry, typeColor, TypeIcon, typeLabel, onEdit, onDelete }) {
+  const isCollage = entry.type === "collage";
   return (
-    <div className="flex flex-col" style={{minHeight: "100%"}}>
+    // Collages must fit exactly (no scroll): use height 100%.
+    // Journals and check-ins can be taller than the viewport: use minHeight 100%.
+    <div className="flex flex-col" style={{[isCollage ? "height" : "minHeight"]: "100%"}}>
       {/* Page header strip */}
       <div className="flex items-center justify-between px-4 py-2.5 flex-shrink-0"
         style={{borderBottom: `1.5px solid ${typeColor}28`, background: `${typeColor}0a`}}>
@@ -823,8 +826,10 @@ function ScrapbookPage({ entry, typeColor, TypeIcon, typeLabel, onEdit, onDelete
         </div>
       </div>
 
-      {/* Entry-type body */}
-      <div className="flex-1">
+      {/* Entry-type body
+          For collages: minHeight 0 so flex can shrink this below content size,
+          then pass the resolved height down to ScrapbookCollagePage. */}
+      <div className="flex-1" style={isCollage ? {minHeight: 0, display: "flex", flexDirection: "column"} : {}}>
         {entry.type === "collage" && <ScrapbookCollagePage entry={entry} />}
         {entry.type === "journal" && <ScrapbookJournalPage entry={entry} />}
         {entry.type === "checkin" && <ScrapbookCheckinPage entry={entry} />}
@@ -847,45 +852,59 @@ function ScrapbookPage({ entry, typeColor, TypeIcon, typeLabel, onEdit, onDelete
 // ── Collage page: full static canvas preview ─────────────────
 function ScrapbookCollagePage({ entry }) {
   return (
-    <div className="p-4">
-      <h2 className="mb-1 iridescent-text" style={{fontFamily: "'Pacifico', cursive", fontSize: "22px", lineHeight: 1.1}}>
-        {entry.title}
-      </h2>
-      {entry.caption && (
-        <p className="mb-3 italic text-sm" style={{color: "#7a5aa8"}}>{entry.caption}</p>
-      )}
-      <div className="relative w-full rounded-2xl overflow-hidden"
-        style={{aspectRatio: "3/4", background: entry.bg || "#f0e8ff",
-          boxShadow: "0 6px 24px rgba(80,40,130,0.2), inset 0 0 0 1px rgba(255,255,255,0.4)"}}>
-        {(entry.items || []).map(item => (
-          <div key={item.id} style={{
-            position: "absolute", left: `${item.x}%`, top: `${item.y}%`,
-            transform: `rotate(${item.rotation || 0}deg)`, pointerEvents: "none",
+    <div style={{display: "flex", flexDirection: "column", height: "100%"}}>
+      {/* Title + caption — fixed height, don't grow */}
+      <div className="flex-shrink-0 px-4 pt-3 pb-1">
+        <h2 className="iridescent-text" style={{fontFamily: "'Pacifico', cursive", fontSize: "20px", lineHeight: 1.15, margin: 0}}>
+          {entry.title}
+        </h2>
+        {entry.caption && (
+          <p className="italic text-sm mt-0.5 mb-0" style={{color: "#7a5aa8"}}>{entry.caption}</p>
+        )}
+      </div>
+
+      {/* Preview area — takes all remaining height, centers the portrait canvas */}
+      <div style={{flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "8px 16px"}}>
+        {/* Height-driven: fills available height, width computed from 3:4 ratio, never overflows width */}
+        <div className="relative rounded-2xl overflow-hidden"
+          style={{
+            height: "100%",
+            width: "auto",
+            aspectRatio: "3/4",
+            maxWidth: "100%",
+            background: entry.bg || "#f0e8ff",
+            boxShadow: "0 6px 24px rgba(80,40,130,0.2), inset 0 0 0 1px rgba(255,255,255,0.4)",
           }}>
-            {item.type === "image" && (
-              <div style={{width: `${item.w}%`, minWidth: 60, padding: 3,
-                background: "white", borderRadius: 4, boxShadow: "0 3px 10px rgba(0,0,0,0.2)"}}>
-                <img src={item.src} alt="" className="w-full block" style={{borderRadius: 2}}
-                  crossOrigin="anonymous" />
-              </div>
-            )}
-            {item.type === "sticker" && (
-              <div style={{fontSize: item.size, lineHeight: 1}}>{item.content}</div>
-            )}
-            {item.type === "text" && (
-              <div style={{fontFamily: "'Caveat', cursive", fontSize: 22, color: item.color,
-                maxWidth: 180, lineHeight: 1.2}}>{item.content}</div>
-            )}
-          </div>
-        ))}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none"
-          viewBox="0 0 100 100" preserveAspectRatio="none">
-          {(entry.strokes || []).map(s => (
-            <polyline key={s.id} points={s.points.map(p => `${p.x},${p.y}`).join(" ")}
-              fill="none" stroke={s.color} strokeLinecap="round" strokeLinejoin="round"
-              vectorEffect="non-scaling-stroke" style={{strokeWidth: s.size}} />
+          {(entry.items || []).map(item => (
+            <div key={item.id} style={{
+              position: "absolute", left: `${item.x}%`, top: `${item.y}%`,
+              transform: `rotate(${item.rotation || 0}deg)`, pointerEvents: "none",
+            }}>
+              {item.type === "image" && (
+                <div style={{width: `${item.w}%`, minWidth: 60, padding: 3,
+                  background: "white", borderRadius: 4, boxShadow: "0 3px 10px rgba(0,0,0,0.2)"}}>
+                  <img src={item.src} alt="" className="w-full block" style={{borderRadius: 2}}
+                    crossOrigin="anonymous" />
+                </div>
+              )}
+              {item.type === "sticker" && (
+                <div style={{fontSize: item.size, lineHeight: 1}}>{item.content}</div>
+              )}
+              {item.type === "text" && (
+                <div style={{fontFamily: "'Caveat', cursive", fontSize: 22, color: item.color,
+                  maxWidth: 180, lineHeight: 1.2}}>{item.content}</div>
+              )}
+            </div>
           ))}
-        </svg>
+          <svg className="absolute inset-0 w-full h-full pointer-events-none"
+            viewBox="0 0 100 100" preserveAspectRatio="none">
+            {(entry.strokes || []).map(s => (
+              <polyline key={s.id} points={s.points.map(p => `${p.x},${p.y}`).join(" ")}
+                fill="none" stroke={s.color} strokeLinecap="round" strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke" style={{strokeWidth: s.size}} />
+            ))}
+          </svg>
+        </div>
       </div>
     </div>
   );
