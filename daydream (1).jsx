@@ -598,6 +598,8 @@ function ScrapbookView({ entries, onOpen, onDelete }) {
   const [page, setPage] = useState(0);
   const [dir, setDir]   = useState(1);   // 1 = sliding in from right, -1 = from left
   const [animKey, setAnimKey] = useState(0);
+  const [tocOpen, setTocOpen] = useState(false);
+  const [tocQuery, setTocQuery] = useState("");
   const touchRef = useRef(null);
 
   // Keep page in bounds whenever entries array length changes (e.g. after delete)
@@ -620,6 +622,8 @@ function ScrapbookView({ entries, onOpen, onDelete }) {
     setDir(direction);
     setPage(clamped);
     setAnimKey(k => k + 1);
+    setTocOpen(false);
+    setTocQuery("");
   }, [entries.length]);
 
   const prev = () => { if (page > 0) goTo(page - 1, -1); };
@@ -637,6 +641,20 @@ function ScrapbookView({ entries, onOpen, onDelete }) {
     if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
     if (dx > 0) prev(); else next();
   };
+
+  // TOC: filter entries by title / caption / body
+  const tocEntries = useMemo(() => {
+    const q = tocQuery.toLowerCase().trim();
+    return entries.map((e, i) => ({ e, i })).filter(({ e }) => {
+      if (!q) return true;
+      return (
+        (e.title  || "").toLowerCase().includes(q) ||
+        (e.caption|| "").toLowerCase().includes(q) ||
+        (e.body   || "").slice(0, 120).toLowerCase().includes(q) ||
+        (e.carry  || "").toLowerCase().includes(q)
+      );
+    });
+  }, [entries, tocQuery]);
 
   if (entries.length === 0) {
     return (
@@ -658,12 +676,79 @@ function ScrapbookView({ entries, onOpen, onDelete }) {
 
   return (
     <div className="px-2 pb-2 flex flex-col">
-      {/* ── Top bar: page counter + (TOC toggle added in step 2) ── */}
-      <div className="flex items-center justify-end mb-3 px-2">
+      {/* ── Top bar: contents toggle + page counter ── */}
+      <div className="flex items-center justify-between mb-3 px-2">
+        <button
+          onClick={() => { setTocOpen(o => !o); setTocQuery(""); }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs glass transition"
+          style={{color: "rgba(255,255,255,0.88)"}}>
+          <Book className="w-3 h-3" />
+          <span style={{fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.1em"}}>
+            contents {tocOpen ? "▴" : "▾"}
+          </span>
+        </button>
         <span style={{fontFamily: "'VT323', monospace", fontSize: "20px", color: "#c5a0f0", letterSpacing: "0.1em"}}>
           {safePage + 1} / {total}
         </span>
       </div>
+
+      {/* ── TOC panel: slides down, glass style ── */}
+      {tocOpen && (
+        <div className="mb-3 rounded-2xl overflow-hidden glass slide-in"
+          style={{maxHeight: "55vh", display: "flex", flexDirection: "column"}}>
+          {/* Search bar */}
+          <div className="px-3 py-2.5 flex-shrink-0"
+            style={{borderBottom: "1px solid rgba(255,255,255,0.12)"}}>
+            <input
+              value={tocQuery}
+              onChange={e => setTocQuery(e.target.value)}
+              placeholder="search pages..."
+              autoFocus
+              className="w-full px-3 py-1.5 rounded-xl outline-none text-sm"
+              style={{background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.18)",
+                color: "white", fontFamily: "'Space Grotesk', sans-serif",
+                "::placeholder": {color: "rgba(255,255,255,0.4)"}}}
+            />
+          </div>
+          {/* Entry list */}
+          <div className="overflow-y-auto flex-1">
+            {tocEntries.length === 0 ? (
+              <p className="px-4 py-3 text-sm italic"
+                style={{color: "rgba(255,255,255,0.4)"}}>no results</p>
+            ) : tocEntries.map(({ e, i }) => {
+              const meta = TYPE_META[e.type] || TYPE_META.collage;
+              const preview = (e.title || e.caption || e.carry ||
+                (e.body || "").slice(0, 42) || e.date || "").trim();
+              const active = i === safePage;
+              return (
+                <button key={e.id}
+                  onClick={() => goTo(i, i > safePage ? 1 : -1)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 text-left transition"
+                  style={{
+                    background: active ? "rgba(255,255,255,0.12)" : "transparent",
+                    borderLeft: `3px solid ${meta.color}`,
+                    borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  }}>
+                  <meta.Icon className="w-3.5 h-3.5 flex-shrink-0" style={{color: meta.color}} />
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate text-sm leading-snug"
+                      style={{color: active ? "white" : "rgba(255,255,255,0.78)"}}>
+                      {preview.slice(0, 44) || "—"}
+                    </p>
+                    <p style={{fontFamily: "'VT323', monospace", fontSize: "12px",
+                      letterSpacing: "0.08em", color: meta.color, opacity: 0.9}}>
+                      {meta.label} · {e.date}
+                    </p>
+                  </div>
+                  {active && (
+                    <span style={{color: meta.color, fontSize: "12px", flexShrink: 0}}>◀</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Page + left/right arrows ── */}
       <div className="relative flex items-center gap-2"
