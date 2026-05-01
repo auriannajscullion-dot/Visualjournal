@@ -57,6 +57,26 @@ const SAMPLE_COLLAGE = {
 const SAMPLE_ENTRIES = [SAMPLE_PHOTO, SAMPLE_COLLAGE];
 
 const STICKERS = ["✨","💖","🌸","🦋","🌙","⭐","💫","🫧","💗","🌿","🍄","👁️","🔮","🪩","☁️","🌈","⚡","🎀","💜","🪐","🫐","🌷","🍡","💅"];
+
+const _svgUri = (svg) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+const KAWAII_STICKERS = [
+  { id: "sparkle", label: "sparkle", src: _svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><path d="M50 5L56 44L95 50L56 56L50 95L44 56L5 50L44 44Z" fill="#FF6EC7" stroke="#A78BFA" stroke-width="2"/><circle cx="50" cy="50" r="7" fill="#FFD166"/></svg>`) },
+  { id: "moon",    label: "moon",    src: _svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><path d="M70 20Q90 50 70 80Q40 90 20 70Q50 65 55 50Q50 35 20 30Q40 10 70 20Z" fill="#FFD166" stroke="#FF8FC4" stroke-width="1.5"/></svg>`) },
+  { id: "heart",   label: "heart",   src: _svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><path d="M50 82C50 82 12 58 12 33A22 22 0 0 1 50 22A22 22 0 0 1 88 33C88 58 50 82 50 82Z" fill="#FF6EC7" stroke="#A78BFA" stroke-width="2"/><path d="M30 30Q28 40 40 48" stroke="white" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.5"/></svg>`) },
+  { id: "cloud",   label: "cloud",   src: _svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><ellipse cx="50" cy="62" rx="35" ry="22" fill="#c5b3ff"/><ellipse cx="35" cy="55" rx="22" ry="20" fill="#d4c5ff"/><ellipse cx="62" cy="52" rx="22" ry="20" fill="#d4c5ff"/><ellipse cx="50" cy="45" rx="18" ry="18" fill="#e8e0ff"/></svg>`) },
+  { id: "rainbow", label: "rainbow", src: _svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><path d="M10 75A40 40 0 0 1 90 75" fill="none" stroke="#FF6EC7" stroke-width="8" stroke-linecap="round"/><path d="M17 75A33 33 0 0 1 83 75" fill="none" stroke="#FFD166" stroke-width="8" stroke-linecap="round"/><path d="M24 75A26 26 0 0 1 76 75" fill="none" stroke="#60E5FF" stroke-width="8" stroke-linecap="round"/><path d="M31 75A19 19 0 0 1 69 75" fill="none" stroke="#B8FF6B" stroke-width="8" stroke-linecap="round"/></svg>`) },
+  { id: "mushroom",label: "mushroom",src: _svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><rect x="40" y="55" width="20" height="30" rx="6" fill="#ffe8f5" stroke="#FF8FC4" stroke-width="1.5"/><path d="M12 56Q50 5 88 56Z" fill="#FF6EC7" stroke="#A78BFA" stroke-width="2"/><circle cx="36" cy="38" r="7" fill="white" opacity="0.75"/><circle cx="60" cy="33" r="6" fill="white" opacity="0.75"/><circle cx="75" cy="50" r="5" fill="white" opacity="0.75"/></svg>`) },
+  { id: "flower",  label: "flower",  src: _svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><ellipse cx="50" cy="22" rx="12" ry="20" fill="#FF8FC4"/><ellipse cx="78" cy="50" rx="20" ry="12" fill="#FF8FC4"/><ellipse cx="50" cy="78" rx="12" ry="20" fill="#FF6EC7"/><ellipse cx="22" cy="50" rx="20" ry="12" fill="#FF6EC7"/><ellipse cx="71" cy="29" rx="12" ry="20" fill="#D49BFF" transform="rotate(45 71 29)"/><ellipse cx="71" cy="71" rx="12" ry="20" fill="#FFB4DE" transform="rotate(-45 71 71)"/><ellipse cx="29" cy="29" rx="12" ry="20" fill="#FFB4DE" transform="rotate(-45 29 29)"/><ellipse cx="29" cy="71" rx="12" ry="20" fill="#D49BFF" transform="rotate(45 29 71)"/><circle cx="50" cy="50" r="14" fill="#FFD166"/><circle cx="50" cy="50" r="6" fill="#FF8FC4"/></svg>`) },
+  { id: "eye",     label: "eye",     src: _svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><path d="M10 50Q50 8 90 50Q50 92 10 50Z" fill="#1a0b2e" stroke="#A78BFA" stroke-width="2"/><circle cx="50" cy="50" r="20" fill="#A78BFA"/><circle cx="50" cy="50" r="13" fill="#60E5FF"/><circle cx="50" cy="50" r="7" fill="#1a0b2e"/><circle cx="54" cy="46" r="3" fill="white"/><line x1="50" y1="5" x2="50" y2="20" stroke="#FFD166" stroke-width="2"/><line x1="50" y1="80" x2="50" y2="95" stroke="#FFD166" stroke-width="2"/></svg>`) },
+  { id: "butterfly",label:"butterfly",src:_svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><ellipse cx="28" cy="38" rx="24" ry="30" fill="#FF6EC7" opacity="0.8" transform="rotate(-25 28 38)"/><ellipse cx="72" cy="38" rx="24" ry="30" fill="#A78BFA" opacity="0.8" transform="rotate(25 72 38)"/><ellipse cx="26" cy="65" rx="16" ry="20" fill="#FFD166" opacity="0.8" transform="rotate(20 26 65)"/><ellipse cx="74" cy="65" rx="16" ry="20" fill="#60E5FF" opacity="0.8" transform="rotate(-20 74 65)"/><ellipse cx="50" cy="50" rx="4" ry="35" fill="#1a0b2e"/><path d="M46 18Q44 12 46 8" stroke="#1a0b2e" stroke-width="2" fill="none"/><path d="M54 18Q56 12 54 8" stroke="#1a0b2e" stroke-width="2" fill="none"/></svg>`) },
+  { id: "planet",  label: "planet",  src: _svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><ellipse cx="50" cy="55" rx="60" ry="14" fill="none" stroke="#FFD166" stroke-width="5" transform="rotate(-15 50 55)"/><circle cx="50" cy="50" r="26" fill="#A78BFA"/><ellipse cx="50" cy="50" rx="20" ry="12" fill="#c5b3ff" opacity="0.5"/></svg>`) },
+  { id: "crystal", label: "crystal", src: _svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><polygon points="50,8 78,35 68,92 32,92 22,35" fill="#A78BFA" stroke="#60E5FF" stroke-width="2"/><polygon points="50,8 78,35 50,52" fill="#c5b3ff" opacity="0.75"/><polygon points="50,8 22,35 50,52" fill="#8060ff" opacity="0.75"/><line x1="50" y1="8" x2="50" y2="52" stroke="white" stroke-width="1.5" opacity="0.6"/><line x1="22" y1="35" x2="78" y2="35" stroke="white" stroke-width="1" opacity="0.4"/></svg>`) },
+  { id: "blossom", label: "blossom", src: _svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><ellipse cx="50" cy="25" rx="16" ry="23" fill="#FFB4DE"/><ellipse cx="75" cy="50" rx="23" ry="16" fill="#FF8FC4"/><ellipse cx="50" cy="75" rx="16" ry="23" fill="#FFB4DE"/><ellipse cx="25" cy="50" rx="23" ry="16" fill="#FF8FC4"/><circle cx="50" cy="50" r="13" fill="#FFD166"/><circle cx="50" cy="50" r="5" fill="#FF6EC7"/></svg>`) },
+  { id: "bolt",    label: "bolt",    src: _svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><polygon points="62,5 36,52 55,52 38,95 78,42 56,42 68,5" fill="#FFD166" stroke="#FF8FC4" stroke-width="2"/></svg>`) },
+  { id: "cat",     label: "cat",     src: _svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><circle cx="50" cy="56" r="34" fill="#FF8FC4" stroke="#FF6EC7" stroke-width="2"/><polygon points="22,34 12,12 36,28" fill="#FF8FC4" stroke="#FF6EC7" stroke-width="1.5"/><polygon points="78,34 88,12 64,28" fill="#FF8FC4" stroke="#FF6EC7" stroke-width="1.5"/><ellipse cx="37" cy="52" rx="9" ry="11" fill="#A78BFA"/><ellipse cx="63" cy="52" rx="9" ry="11" fill="#A78BFA"/><ellipse cx="37" cy="54" rx="5" ry="8" fill="#1a0b2e"/><ellipse cx="63" cy="54" rx="5" ry="8" fill="#1a0b2e"/><circle cx="39" cy="51" r="2" fill="white"/><circle cx="65" cy="51" r="2" fill="white"/><ellipse cx="50" cy="67" rx="6" ry="4" fill="#FF6EC7"/><path d="M50 68L36 63M50 68L64 63" stroke="#FFD4EC" stroke-width="1.5" fill="none"/></svg>`) },
+  { id: "potion",  label: "potion",  src: _svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><rect x="40" y="5" width="20" height="16" rx="4" fill="#A78BFA" stroke="#60E5FF" stroke-width="1.5"/><path d="M36 21Q26 38 22 56Q18 78 30 90Q40 98 50 98Q60 98 70 90Q82 78 78 56Q74 38 64 21Z" fill="#c5b3ff" stroke="#A78BFA" stroke-width="2"/><ellipse cx="50" cy="72" rx="20" ry="17" fill="#FF6EC7" opacity="0.65"/><circle cx="40" cy="55" r="5" fill="#60E5FF" opacity="0.8"/><circle cx="62" cy="50" r="3.5" fill="#FFD166" opacity="0.8"/></svg>`) },
+  { id: "shootingstar", label: "shooting star", src: _svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><path d="M80 12L8 88" stroke="#D49BFF" stroke-width="4" stroke-linecap="round" opacity="0.35"/><path d="M85 12L13 88" stroke="#60E5FF" stroke-width="2.5" stroke-linecap="round" opacity="0.25"/><polygon points="85,12 90,22 82,16 92,18 84,24" fill="#FFD166"/><circle cx="86" cy="14" r="6" fill="#FFD166" opacity="0.9"/></svg>`) },
+];
 const PEN_COLORS = ["#FF6EC7","#FF8FC4","#D49BFF","#A78BFA","#8FA5FF","#60E5FF","#7DFFD4","#B8FF6B","#FFE27A","#FFD166","#FFA07A","#FFFFFF","#1a0b2e"];
 const BRUSH_TYPES = [
   { id: "pen",         label: "pen",         icon: "✒︎" },
@@ -1306,6 +1326,7 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   const [selectedId, setSelectedId] = useState(null);
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [showStickers, setShowStickers] = useState(false);
+  const [stickerTab, setStickerTab] = useState("emoji");
   const [addingText, setAddingText] = useState(false);
   const [textDraft, setTextDraft] = useState("");
   const [showSettings, setShowSettings] = useState(false);
@@ -1722,15 +1743,45 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
 
         {showStickers && (
           <div className="mt-3 rounded-2xl p-3 slide-in glass">
-            <p className="mb-2 px-1 text-white/80" style={{fontFamily: "'VT323', monospace", fontSize: "14px", letterSpacing: "0.1em", textTransform: "uppercase"}}>▸ tap to add:</p>
-            <div className="flex flex-wrap gap-1">
-              {STICKERS.map((s, i) => (
-                <button key={i} onClick={() => {
-                  addItem({ type: "sticker", content: s, x: rand(20, 70), y: rand(20, 70), size: rand(40, 72), rotation: rand(-20, 20) });
-                  setShowStickers(false);
-                }} className="w-10 h-10 rounded-xl hover:bg-white/10 text-2xl flex items-center justify-center transition">{s}</button>
+            {/* Tab row */}
+            <div className="flex gap-1.5 mb-3">
+              {["emoji", "kawaii"].map(tab => (
+                <button key={tab} onClick={() => setStickerTab(tab)}
+                  className="px-3 py-1 rounded-full text-xs font-medium transition"
+                  style={{
+                    background: stickerTab === tab ? "linear-gradient(110deg, #ff6ec7, #a78bfa)" : "rgba(255,255,255,0.12)",
+                    color: "white",
+                    border: stickerTab === tab ? "1px solid rgba(255,255,255,0.45)" : "1px solid rgba(255,255,255,0.18)",
+                    boxShadow: stickerTab === tab ? "0 4px 14px rgba(255,110,199,0.45)" : "none",
+                  }}>{tab}</button>
               ))}
             </div>
+
+            {stickerTab === "emoji" && (
+              <div className="flex flex-wrap gap-1">
+                {STICKERS.map((s, i) => (
+                  <button key={i} onClick={() => {
+                    addItem({ type: "sticker", content: s, x: rand(20, 70), y: rand(20, 70), size: rand(40, 72), rotation: rand(-20, 20) });
+                    setShowStickers(false);
+                  }} className="w-10 h-10 rounded-xl hover:bg-white/10 text-2xl flex items-center justify-center transition">{s}</button>
+                ))}
+              </div>
+            )}
+
+            {stickerTab === "kawaii" && (
+              <div className="grid grid-cols-5 gap-2">
+                {KAWAII_STICKERS.map(sticker => (
+                  <button key={sticker.id} onClick={() => {
+                    addItem({ type: "image", src: sticker.src, x: rand(15, 60), y: rand(15, 60), w: rand(22, 38), rotation: rand(-15, 15) });
+                    setShowStickers(false);
+                  }}
+                    className="aspect-square rounded-xl overflow-hidden transition hover:scale-110 flex items-center justify-center"
+                    style={{background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.18)"}}>
+                    <img src={sticker.src} alt={sticker.label} className="w-8 h-8 object-contain" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
