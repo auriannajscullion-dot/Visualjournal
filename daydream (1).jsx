@@ -934,7 +934,7 @@ function ScrapbookCollagePage({ entry }) {
           <svg className="absolute inset-0 w-full h-full pointer-events-none"
             viewBox="0 0 100 100" preserveAspectRatio="none">
             {(entry.strokes || []).map(s => (
-              <polyline key={s.id} points={s.points.map(p => `${p.x},${p.y}`).join(" ")}
+              <polyline key={s.id} points={(s.points || []).map(p => `${p.x},${p.y}`).join(" ")}
                 fill="none" stroke={s.color} strokeLinecap="round" strokeLinejoin="round"
                 vectorEffect="non-scaling-stroke" style={{strokeWidth: s.size}} />
             ))}
@@ -1413,7 +1413,7 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
 
   const eraseAt = useCallback((pctX, pctY) => {
     setLocalStrokes(prev => prev.filter(s =>
-      !s.points.some(pt => Math.hypot(pt.x - pctX, pt.y - pctY) < 5)
+      !s.points?.some(pt => Math.hypot(pt.x - pctX, pt.y - pctY) < 5)
     ));
   }, []);
 
@@ -2159,8 +2159,8 @@ function JournalEditor({ entry, onClose, onSave, onDelete, photoImages }) {
   const exportTimerRef = useRef(null);
   useEffect(() => () => { if (exportTimerRef.current) clearTimeout(exportTimerRef.current); }, []);
 
-  const addImage = (src) => { setImages([...images, src]); setShowImagePicker(false); };
-  const removeImage = (i) => setImages(images.filter((_, idx) => idx !== i));
+  const addImage = (src) => { setImages(prev => [...prev, src]); setShowImagePicker(false); };
+  const removeImage = (i) => setImages(prev => prev.filter((_, idx) => idx !== i));
   const handleFile = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
     try {
@@ -2769,7 +2769,7 @@ function CollageView({ entry, onEdit }) {
         ))}
         <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
           {(entry.strokes || []).map(s => (
-            <polyline key={s.id} points={s.points.map(p => `${p.x},${p.y}`).join(" ")}
+            <polyline key={s.id} points={(s.points || []).map(p => `${p.x},${p.y}`).join(" ")}
               fill="none" stroke={s.color} strokeLinecap="round" strokeLinejoin="round"
               vectorEffect="non-scaling-stroke" style={{strokeWidth: s.size}} />
           ))}
@@ -2908,13 +2908,16 @@ function CheckinView({ entry, onDelete }) { /* lighter view */
 // ============================================================
 // PDF EXPORT — uses html2canvas + jsPDF loaded at runtime
 // ============================================================
+const _loadingScripts = {};
 async function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) return resolve();
+  if (_loadingScripts[src]) return _loadingScripts[src];
+  _loadingScripts[src] = new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
     const s = document.createElement("script");
     s.src = src; s.onload = resolve; s.onerror = reject;
     document.head.appendChild(s);
   });
+  return _loadingScripts[src];
 }
 
 async function exportPageAsPDF(element, filename = "page") {
