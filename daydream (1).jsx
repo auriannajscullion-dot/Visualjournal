@@ -648,16 +648,6 @@ function ScrapbookView({ entries, onOpen, onDelete }) {
     setPage(p => Math.min(p, Math.max(0, entries.length - 1)));
   }, [entries.length]);
 
-  // Jump to page 0 when a brand-new entry appears at the front
-  const firstId = entries[0]?.id;
-  const prevFirstId = useRef(firstId);
-  useEffect(() => {
-    if (prevFirstId.current !== firstId && firstId) {
-      prevFirstId.current = firstId;
-      goTo(0, -1);
-    }
-  });
-
   const goTo = useCallback((idx, direction = 1) => {
     const clamped = Math.max(0, Math.min(entries.length - 1, idx));
     setDir(direction);
@@ -666,6 +656,16 @@ function ScrapbookView({ entries, onOpen, onDelete }) {
     setTocOpen(false);
     setTocQuery("");
   }, [entries.length]);
+
+  // Jump to page 0 when a brand-new entry appears at the front
+  const firstId = entries[0]?.id;
+  const prevFirstId = useRef(firstId);
+  useEffect(() => {
+    if (prevFirstId.current !== firstId && firstId) {
+      prevFirstId.current = firstId;
+      goTo(0, -1);
+    }
+  }, [firstId, goTo]);
 
   const prev = () => { if (page > 0) goTo(page - 1, -1); };
   const next = () => { if (page < entries.length - 1) goTo(page + 1, 1); };
@@ -1385,8 +1385,10 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   // Debounced flush to parent — kept in ref so latest values are always sent
   const latestRef = useRef({ items: localItems, strokes: localStrokes, caption: localCaption });
   latestRef.current = { items: localItems, strokes: localStrokes, caption: localCaption };
+  const onUpdateRef = useRef(onUpdate);
+  onUpdateRef.current = onUpdate;
   useEffect(() => {
-    const t = setTimeout(() => onUpdate(latestRef.current), 400);
+    const t = setTimeout(() => onUpdateRef.current(latestRef.current), 400);
     return () => clearTimeout(t);
   }, [localItems, localStrokes, localCaption]);
 
@@ -1930,7 +1932,7 @@ function KonvaImageCard({ item, stageW, stageH, x, y, rot, draggable, isSelected
   useEffect(() => {
     onNodeRef(groupRef.current);
     return () => onNodeRef(null);
-  }, []); // mount/unmount only — component is stable while item exists (key=item.id)
+  }, [onNodeRef]); // component is stable while item exists (key=item.id)
 
   const PAD = 6;
   const w = ((item.w || 35) / 100) * stageW;
@@ -2159,8 +2161,8 @@ function JournalEditor({ entry, onClose, onSave, onDelete, photoImages }) {
   const exportTimerRef = useRef(null);
   useEffect(() => () => { if (exportTimerRef.current) clearTimeout(exportTimerRef.current); }, []);
 
-  const addImage = (src) => { setImages([...images, src]); setShowImagePicker(false); };
-  const removeImage = (i) => setImages(images.filter((_, idx) => idx !== i));
+  const addImage = (src) => { setImages(prev => [...prev, src]); setShowImagePicker(false); };
+  const removeImage = (i) => setImages(prev => prev.filter((_, idx) => idx !== i));
   const handleFile = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
     try {
