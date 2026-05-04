@@ -127,8 +127,8 @@ const PAGE_BGS = [
   "linear-gradient(135deg, #fff4e6 0%, #ffe6f5 100%)",
   "linear-gradient(135deg, #e6f9ff 0%, #f0e6ff 100%)",
   "linear-gradient(135deg, #ffe6f0 0%, #e6ffe8 100%)",
-  "linear-gradient(135deg, #4a2e7a 0%, #6b4aa8 100%)",
   "linear-gradient(135deg, #ffffff 0%, #ffe6f5 100%)",
+  "linear-gradient(135deg, #4a2e7a 0%, #6b4aa8 100%)",
 ];
 
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -656,7 +656,7 @@ function ScrapbookView({ entries, onOpen, onDelete }) {
       prevFirstId.current = firstId;
       goTo(0, -1);
     }
-  });
+  }, [firstId, goTo]);
 
   const goTo = useCallback((idx, direction = 1) => {
     const clamped = Math.max(0, Math.min(entries.length - 1, idx));
@@ -672,10 +672,11 @@ function ScrapbookView({ entries, onOpen, onDelete }) {
 
   // Touch swipe — only trigger if dx > dy (horizontal gesture)
   const onTouchStart = (e) => {
+    if (!e.touches[0]) return;
     touchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
   };
   const onTouchEnd = (e) => {
-    if (!touchRef.current) return;
+    if (!touchRef.current || !e.changedTouches[0]) return;
     const dx = e.changedTouches[0].clientX - touchRef.current.x;
     const dy = e.changedTouches[0].clientY - touchRef.current.y;
     touchRef.current = null;
@@ -2922,7 +2923,8 @@ async function exportPageAsPDF(element, filename = "page") {
   await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
   await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
   const html2canvas = window.html2canvas;
-  const { jsPDF } = window.jspdf;
+  const jsPDF = window.jspdf?.jsPDF;
+  if (!html2canvas || !jsPDF) throw new Error("Failed to load export libraries");
 
   const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: null });
   const imgData = canvas.toDataURL("image/jpeg", 0.92);
