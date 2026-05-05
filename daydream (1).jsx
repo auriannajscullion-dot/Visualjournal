@@ -147,17 +147,21 @@ function useKonvaImage(src) {
   }));
   useEffect(() => {
     if (!src || _imgCache[src] || _imgErrorCache.has(src)) return;
+    let cancelled = false;
     const el = new window.Image();
     el.crossOrigin = "anonymous";
     el.onload = () => {
+      if (cancelled) return;
       _imgCache[src] = el;
       setState({ img: el, error: false });
     };
     el.onerror = () => {
+      if (cancelled) return;
       _imgErrorCache.add(src);
       setState({ img: null, error: true });
     };
     el.src = src;
+    return () => { cancelled = true; };
   }, [src]);
   return state;
 }
@@ -656,7 +660,7 @@ function ScrapbookView({ entries, onOpen, onDelete }) {
       prevFirstId.current = firstId;
       goTo(0, -1);
     }
-  });
+  }, [firstId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const goTo = useCallback((idx, direction = 1) => {
     const clamped = Math.max(0, Math.min(entries.length - 1, idx));
@@ -971,8 +975,8 @@ function ScrapbookJournalPage({ entry }) {
         </p>
         {entry.images?.length > 0 && (
           <div className="space-y-3 mt-4">
-            {entry.images.map((src, i) => (
-              <img key={i} src={src} alt="" className="w-full rounded-xl"
+            {entry.images.map((src) => (
+              <img key={src} src={src} alt="" className="w-full rounded-xl"
                 style={{boxShadow: "0 4px 14px rgba(0,0,0,0.1)"}} crossOrigin="anonymous" />
             ))}
           </div>
@@ -1024,8 +1028,8 @@ function ScrapbookCheckinPage({ entry }) {
           <p className="mb-1.5" style={{color: "#6b4aa8", fontFamily: "'VT323', monospace",
             fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase"}}>▸ vibe</p>
           <div className="flex flex-wrap gap-1.5">
-            {entry.moods.map((m, i) => (
-              <span key={i} className="px-2 py-0.5 rounded-full text-xs"
+            {entry.moods.map((m) => (
+              <span key={m} className="px-2 py-0.5 rounded-full text-xs"
                 style={{background: "rgba(255,110,199,0.15)",
                   border: "1px solid rgba(255,110,199,0.4)", color: "#8a2a6a"}}>{m}</span>
             ))}
@@ -1041,8 +1045,8 @@ function ScrapbookCheckinPage({ entry }) {
             ▸ whimsy ({entry.whimsy.length})
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {entry.whimsy.map((w, i) => (
-              <span key={i} className="px-2 py-0.5 rounded-full text-xs"
+            {entry.whimsy.map((w) => (
+              <span key={w} className="px-2 py-0.5 rounded-full text-xs"
                 style={{background: "rgba(96,229,255,0.15)",
                   border: "1px solid rgba(44,143,181,0.4)", color: "#1f5f7a"}}>{w}</span>
             ))}
@@ -1053,8 +1057,8 @@ function ScrapbookCheckinPage({ entry }) {
       {/* Photos */}
       {entry.images?.length > 0 && (
         <div className="grid grid-cols-3 gap-2 mb-4">
-          {entry.images.map((src, i) => (
-            <img key={i} src={src} alt="" className="aspect-square object-cover rounded-xl"
+          {entry.images.map((src) => (
+            <img key={src} src={src} alt="" className="aspect-square object-cover rounded-xl"
               crossOrigin="anonymous"
               style={{boxShadow: "0 2px 8px rgba(91,58,138,0.18)"}} />
           ))}
@@ -2159,8 +2163,8 @@ function JournalEditor({ entry, onClose, onSave, onDelete, photoImages }) {
   const exportTimerRef = useRef(null);
   useEffect(() => () => { if (exportTimerRef.current) clearTimeout(exportTimerRef.current); }, []);
 
-  const addImage = (src) => { setImages([...images, src]); setShowImagePicker(false); };
-  const removeImage = (i) => setImages(images.filter((_, idx) => idx !== i));
+  const addImage = (src) => { setImages(prev => [...prev, src]); setShowImagePicker(false); };
+  const removeImage = (i) => setImages(prev => prev.filter((_, idx) => idx !== i));
   const handleFile = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
     try {
@@ -2251,8 +2255,8 @@ function JournalEditor({ entry, onClose, onSave, onDelete, photoImages }) {
 
               {images.length > 0 && (
                 <div className="mt-5 space-y-3">
-                  {images.map((src, i) => (
-                    <div key={i} className="relative rounded-xl overflow-hidden group" style={{boxShadow: "0 4px 12px rgba(0,0,0,0.15)"}}>
+                  {images.map((src) => (
+                    <div key={src} className="relative rounded-xl overflow-hidden group" style={{boxShadow: "0 4px 12px rgba(0,0,0,0.15)"}}>
                       <img src={src} alt="" className="w-full block" crossOrigin="anonymous" />
                       <button onClick={() => removeImage(i)}
                         className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
