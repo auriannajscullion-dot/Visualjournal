@@ -305,7 +305,6 @@ export default function App({ session }) {
             entries={scrapbookEntries}
             onOpen={(e) => setEditingScrapbookEntry(e)}
             onDelete={(e) => deleteEntry(e.id)}
-            onNewCompose={(type) => setCompose(type === "collage" ? "collage-new" : type === "journal" ? "journal-new" : "checkin-new")}
           />
         )}
       </div>
@@ -656,7 +655,7 @@ function ScrapbookView({ entries, onOpen, onDelete }) {
       prevFirstId.current = firstId;
       goTo(0, -1);
     }
-  });
+  }, [firstId, goTo]);
 
   const goTo = useCallback((idx, direction = 1) => {
     const clamped = Math.max(0, Math.min(entries.length - 1, idx));
@@ -1382,11 +1381,13 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
     setSelectedId(null);
   }, [entry.id]);
 
-  // Debounced flush to parent — kept in ref so latest values are always sent
+  // Debounced flush to parent — both refs kept so latest values are always sent
   const latestRef = useRef({ items: localItems, strokes: localStrokes, caption: localCaption });
   latestRef.current = { items: localItems, strokes: localStrokes, caption: localCaption };
+  const onUpdateRef = useRef(onUpdate);
+  onUpdateRef.current = onUpdate;
   useEffect(() => {
-    const t = setTimeout(() => onUpdate(latestRef.current), 400);
+    const t = setTimeout(() => onUpdateRef.current(latestRef.current), 400);
     return () => clearTimeout(t);
   }, [localItems, localStrokes, localCaption]);
 
@@ -2159,7 +2160,7 @@ function JournalEditor({ entry, onClose, onSave, onDelete, photoImages }) {
   const exportTimerRef = useRef(null);
   useEffect(() => () => { if (exportTimerRef.current) clearTimeout(exportTimerRef.current); }, []);
 
-  const addImage = (src) => { setImages([...images, src]); setShowImagePicker(false); };
+  const addImage = (src) => { setImages(prev => [...prev, src]); setShowImagePicker(false); };
   const removeImage = (i) => setImages(images.filter((_, idx) => idx !== i));
   const handleFile = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
