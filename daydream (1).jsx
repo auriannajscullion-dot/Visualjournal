@@ -147,17 +147,19 @@ function useKonvaImage(src) {
   }));
   useEffect(() => {
     if (!src || _imgCache[src] || _imgErrorCache.has(src)) return;
+    let cancelled = false;
     const el = new window.Image();
     el.crossOrigin = "anonymous";
     el.onload = () => {
       _imgCache[src] = el;
-      setState({ img: el, error: false });
+      if (!cancelled) setState({ img: el, error: false });
     };
     el.onerror = () => {
       _imgErrorCache.add(src);
-      setState({ img: null, error: true });
+      if (!cancelled) setState({ img: null, error: true });
     };
     el.src = src;
+    return () => { cancelled = true; };
   }, [src]);
   return state;
 }
@@ -635,7 +637,7 @@ const TYPE_META = {
 // ============================================================
 // SCRAPBOOK VIEW — book-like one-page-at-a-time experience
 // ============================================================
-function ScrapbookView({ entries, onOpen, onDelete }) {
+function ScrapbookView({ entries, onOpen, onDelete, onNewCompose }) {
   const [page, setPage] = useState(0);
   const [dir, setDir]   = useState(1);   // 1 = sliding in from right, -1 = from left
   const [animKey, setAnimKey] = useState(0);
@@ -656,7 +658,7 @@ function ScrapbookView({ entries, onOpen, onDelete }) {
       prevFirstId.current = firstId;
       goTo(0, -1);
     }
-  });
+  }, [firstId, goTo]);
 
   const goTo = useCallback((idx, direction = 1) => {
     const clamped = Math.max(0, Math.min(entries.length - 1, idx));
@@ -1208,10 +1210,10 @@ function ComposePhotoModal({ onClose, onSave }) {
             ))}
           </div>
         </div>
-        <button onClick={save} disabled={!image}
+        <button onClick={save} disabled={!image || uploading}
           className="w-full py-3 rounded-xl text-white transition disabled:opacity-30 iridescent"
           style={{boxShadow: "0 4px 20px rgba(255,110,199,0.5)"}}>
-          save to feed ✦
+          {uploading ? "uploading..." : "save to feed ✦"}
         </button>
       </div>
     </div>
@@ -1269,7 +1271,8 @@ function CreateCollage({ onClose, onSave, photoImages }) {
   const [title, setTitle] = useState("");
 
   const save = () => {
-    const bg = PAGE_BGS[Math.floor(Math.random() * (PAGE_BGS.length - 1))]; // skip dark bg as default
+    const lightBgs = PAGE_BGS.filter((_, i) => i !== 4);
+    const bg = lightBgs[Math.floor(Math.random() * lightBgs.length)];
     onSave({
       type: "collage",
       title: title.trim() || "untitled collage",
@@ -1331,7 +1334,7 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   const [textDraft, setTextDraft] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [exportStatus, setExportStatus] = useState(null); // null | "busy" | "done"
-  const [saveStatus, setSaveStatus] = useState(null); // null | "saving" | "saved"
+  const [saveStatus, setSaveStatus] = useState(null); // null | "saved"
 
   const pageRef = useRef(null);         // outer container (used for PDF export)
   const stageRef = useRef(null);         // Konva Stage
@@ -1382,11 +1385,13 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
     setSelectedId(null);
   }, [entry.id]);
 
-  // Debounced flush to parent — kept in ref so latest values are always sent
+  // Debounced flush to parent — kept in ref so latest values and callback are always fresh
   const latestRef = useRef({ items: localItems, strokes: localStrokes, caption: localCaption });
   latestRef.current = { items: localItems, strokes: localStrokes, caption: localCaption };
+  const onUpdateRef = useRef(onUpdate);
+  onUpdateRef.current = onUpdate;
   useEffect(() => {
-    const t = setTimeout(() => onUpdate(latestRef.current), 400);
+    const t = setTimeout(() => onUpdateRef.current(latestRef.current), 400);
     return () => clearTimeout(t);
   }, [localItems, localStrokes, localCaption]);
 
@@ -1503,7 +1508,6 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   const collageImages = useMemo(() => localItems.filter(i => i.type === "image").map(i => i.src), [localItems]);
 
   const handleSave = () => {
-    setSaveStatus("saving");
     onUpdate({ items: localItems, strokes: localStrokes, caption: localCaption });
     setSaveStatus("saved");
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -1817,11 +1821,11 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
             onChange={setLocalCaption}
             placeholder="caption (shown under the post on the feed)" rows={2} />
           <div className="flex gap-2">
-            <button onClick={handleSave} disabled={saveStatus === "saving"}
+            <button onClick={handleSave}
               className="flex-1 py-3 rounded-xl transition flex items-center justify-center gap-2"
               style={{color: "#3d1d6b", background: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,110,199,0.5)",
                 boxShadow: saveStatus === "saved" ? "0 0 12px rgba(255,110,199,0.4)" : "none"}}>
-              {saveStatus === "saved" ? "saved ✦" : saveStatus === "saving" ? "saving..." : "save ✦"}
+              {saveStatus === "saved" ? "saved ✦" : "save ✦"}
             </button>
             <button onClick={handleExport} disabled={exportStatus === "busy"}
               className="flex-1 py-3 rounded-xl transition flex items-center justify-center gap-2"
@@ -1854,10 +1858,13 @@ function KonvaCollageItem({ item, stageW, stageH, isSelected, onSelect, onUpdate
   const rot = item.rotation || 0;
   const draggable = !tool;
 
-  const handleDragEnd = (e) => onUpdate({
-    x: (e.target.x() / stageW) * 100,
-    y: (e.target.y() / stageH) * 100,
-  });
+  const handleDragEnd = (e) => {
+    e.cancelBubble = true;
+    onUpdate({
+      x: (e.target.x() / stageW) * 100,
+      y: (e.target.y() / stageH) * 100,
+    });
+  };
   const handleTap = (e) => { e.cancelBubble = true; if (!tool) onSelect(); };
 
   if (item.type === "image") {
@@ -2125,7 +2132,7 @@ function CollageSettings({ entry, onUpdate, onDelete, onClose, availableImages }
         <NeonLabel>page background</NeonLabel>
         <div className="grid grid-cols-3 gap-2 mb-4">
           {PAGE_BGS.map((bg, i) => (
-            <button key={i} onClick={() => { setLocalBg(bg); setLocalDark(i === 4); }}
+            <button key={i} onClick={() => { setLocalBg(bg); setLocalDark(bg === PAGE_BGS[4]); }}
               className="h-14 rounded-xl transition"
               style={{background: bg, border: localBg === bg ? "2px solid #ff6ec7" : "1px solid rgba(255,255,255,0.15)",
                 boxShadow: localBg === bg ? "0 0 12px rgba(255,110,199,0.5)" : "none"}} />
@@ -2159,8 +2166,8 @@ function JournalEditor({ entry, onClose, onSave, onDelete, photoImages }) {
   const exportTimerRef = useRef(null);
   useEffect(() => () => { if (exportTimerRef.current) clearTimeout(exportTimerRef.current); }, []);
 
-  const addImage = (src) => { setImages([...images, src]); setShowImagePicker(false); };
-  const removeImage = (i) => setImages(images.filter((_, idx) => idx !== i));
+  const addImage = (src) => { setImages(prev => [...prev, src]); setShowImagePicker(false); };
+  const removeImage = (i) => setImages(prev => prev.filter((_, idx) => idx !== i));
   const handleFile = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
     try {
@@ -2908,13 +2915,16 @@ function CheckinView({ entry, onDelete }) { /* lighter view */
 // ============================================================
 // PDF EXPORT — uses html2canvas + jsPDF loaded at runtime
 // ============================================================
+const _loadingScripts = {};
 async function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) return resolve();
+  if (document.querySelector(`script[src="${src}"]`)) return;
+  if (_loadingScripts[src]) return _loadingScripts[src];
+  _loadingScripts[src] = new Promise((resolve, reject) => {
     const s = document.createElement("script");
     s.src = src; s.onload = resolve; s.onerror = reject;
     document.head.appendChild(s);
   });
+  return _loadingScripts[src];
 }
 
 async function exportPageAsPDF(element, filename = "page") {
