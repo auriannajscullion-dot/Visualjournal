@@ -656,7 +656,7 @@ function ScrapbookView({ entries, onOpen, onDelete }) {
       prevFirstId.current = firstId;
       goTo(0, -1);
     }
-  });
+  }, [firstId, goTo]);
 
   const goTo = useCallback((idx, direction = 1) => {
     const clamped = Math.max(0, Math.min(entries.length - 1, idx));
@@ -1024,8 +1024,8 @@ function ScrapbookCheckinPage({ entry }) {
           <p className="mb-1.5" style={{color: "#6b4aa8", fontFamily: "'VT323', monospace",
             fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase"}}>▸ vibe</p>
           <div className="flex flex-wrap gap-1.5">
-            {entry.moods.map((m, i) => (
-              <span key={i} className="px-2 py-0.5 rounded-full text-xs"
+            {entry.moods.map((m) => (
+              <span key={m} className="px-2 py-0.5 rounded-full text-xs"
                 style={{background: "rgba(255,110,199,0.15)",
                   border: "1px solid rgba(255,110,199,0.4)", color: "#8a2a6a"}}>{m}</span>
             ))}
@@ -1041,8 +1041,8 @@ function ScrapbookCheckinPage({ entry }) {
             ▸ whimsy ({entry.whimsy.length})
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {entry.whimsy.map((w, i) => (
-              <span key={i} className="px-2 py-0.5 rounded-full text-xs"
+            {entry.whimsy.map((w) => (
+              <span key={w} className="px-2 py-0.5 rounded-full text-xs"
                 style={{background: "rgba(96,229,255,0.15)",
                   border: "1px solid rgba(44,143,181,0.4)", color: "#1f5f7a"}}>{w}</span>
             ))}
@@ -1388,7 +1388,7 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   useEffect(() => {
     const t = setTimeout(() => onUpdate(latestRef.current), 400);
     return () => clearTimeout(t);
-  }, [localItems, localStrokes, localCaption]);
+  }, [localItems, localStrokes, localCaption, onUpdate]);
 
   const addItem = (item) => setLocalItems(prev => [...prev, { id: uid(), ...item }]);
   const updateItem = (id, updates) => setLocalItems(prev => prev.map(it => it.id === id ? { ...it, ...updates } : it));
@@ -1854,10 +1854,13 @@ function KonvaCollageItem({ item, stageW, stageH, isSelected, onSelect, onUpdate
   const rot = item.rotation || 0;
   const draggable = !tool;
 
-  const handleDragEnd = (e) => onUpdate({
-    x: (e.target.x() / stageW) * 100,
-    y: (e.target.y() / stageH) * 100,
-  });
+  const handleDragEnd = (e) => {
+    if (!stageW || !stageH) return;
+    onUpdate({
+      x: (e.target.x() / stageW) * 100,
+      y: (e.target.y() / stageH) * 100,
+    });
+  };
   const handleTap = (e) => { e.cancelBubble = true; if (!tool) onSelect(); };
 
   if (item.type === "image") {
@@ -1883,6 +1886,7 @@ function KonvaCollageItem({ item, stageW, stageH, isSelected, onSelect, onUpdate
         shadowColor={isSelected ? "#ff6ec7" : "rgba(0,0,0,0.2)"}
         shadowEnabled
         onTransformEnd={(e) => {
+          if (!stageW || !stageH) return;
           const node = e.target;
           const sx = node.scaleX();
           node.scaleX(1); node.scaleY(1);
@@ -1910,6 +1914,7 @@ function KonvaCollageItem({ item, stageW, stageH, isSelected, onSelect, onUpdate
       shadowColor={item.color === "#ffffff" ? "rgba(255,110,199,0.6)" : "#ff6ec7"}
       shadowEnabled={isSelected || item.color === "#ffffff"}
       onTransformEnd={(e) => {
+        if (!stageW || !stageH) return;
         const node = e.target;
         node.scaleX(1); node.scaleY(1);
         onUpdate({
@@ -1930,11 +1935,11 @@ function KonvaImageCard({ item, stageW, stageH, x, y, rot, draggable, isSelected
   useEffect(() => {
     onNodeRef(groupRef.current);
     return () => onNodeRef(null);
-  }, []); // mount/unmount only — component is stable while item exists (key=item.id)
+  }, [onNodeRef]); // component is stable while item exists (key=item.id)
 
   const PAD = 6;
   const w = ((item.w || 35) / 100) * stageW;
-  const aspect = img ? img.naturalWidth / img.naturalHeight : 4 / 3;
+  const aspect = img && img.naturalHeight > 0 ? img.naturalWidth / img.naturalHeight : 4 / 3;
   const h = w / aspect;
 
   return (
@@ -1944,6 +1949,7 @@ function KonvaImageCard({ item, stageW, stageH, x, y, rot, draggable, isSelected
       draggable={draggable}
       onDragEnd={onDragEnd} onClick={onClick} onTap={onTap}
       onTransformEnd={(e) => {
+        if (!stageW || !stageH) return;
         const node = e.target;
         const sx = node.scaleX();
         node.scaleX(1); node.scaleY(1);
