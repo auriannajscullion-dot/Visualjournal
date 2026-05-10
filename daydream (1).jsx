@@ -1382,11 +1382,13 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
     setSelectedId(null);
   }, [entry.id]);
 
-  // Debounced flush to parent — kept in ref so latest values are always sent
+  // Debounced flush to parent — kept in refs so the timeout always calls the latest values/callback
   const latestRef = useRef({ items: localItems, strokes: localStrokes, caption: localCaption });
   latestRef.current = { items: localItems, strokes: localStrokes, caption: localCaption };
+  const onUpdateRef = useRef(onUpdate);
+  onUpdateRef.current = onUpdate;
   useEffect(() => {
-    const t = setTimeout(() => onUpdate(latestRef.current), 400);
+    const t = setTimeout(() => onUpdateRef.current(latestRef.current), 400);
     return () => clearTimeout(t);
   }, [localItems, localStrokes, localCaption]);
 
@@ -2908,13 +2910,22 @@ function CheckinView({ entry, onDelete }) { /* lighter view */
 // ============================================================
 // PDF EXPORT — uses html2canvas + jsPDF loaded at runtime
 // ============================================================
+
+// Cache in-flight and resolved load promises so concurrent calls share one promise
+// and repeated exports don't re-insert the script tag.
+const _scriptPromises = new Map();
+
 async function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) return resolve();
+  if (_scriptPromises.has(src)) return _scriptPromises.get(src);
+  const p = new Promise((resolve, reject) => {
     const s = document.createElement("script");
-    s.src = src; s.onload = resolve; s.onerror = reject;
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = () => { _scriptPromises.delete(src); reject(new Error(`Failed to load: ${src}`)); };
     document.head.appendChild(s);
   });
+  _scriptPromises.set(src, p);
+  return p;
 }
 
 async function exportPageAsPDF(element, filename = "page") {
@@ -2922,15 +2933,17 @@ async function exportPageAsPDF(element, filename = "page") {
   await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
   await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
   const html2canvas = window.html2canvas;
-  const { jsPDF } = window.jspdf;
+  const { jsPDF } = window.jspdf ?? {};
+  if (!html2canvas || !jsPDF) throw new Error("PDF libraries failed to load");
 
   const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: null });
+  if (!canvas.width || !canvas.height) throw new Error("element has no renderable size");
   const imgData = canvas.toDataURL("image/jpeg", 0.92);
 
-  // Fit the canvas proportions into a letter-size PDF
+  const safeFilename = filename.replace(/[^a-z0-9]/gi, "_") || "page";
   const pdf = new jsPDF({ unit: "pt", format: [canvas.width, canvas.height] });
   pdf.addImage(imgData, "JPEG", 0, 0, canvas.width, canvas.height);
-  pdf.save(`${filename.replace(/[^a-z0-9]/gi, "_")}.pdf`);
+  pdf.save(`${safeFilename}.pdf`);
 }
 
 // ============================================================
