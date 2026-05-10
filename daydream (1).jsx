@@ -532,7 +532,7 @@ function FeedPost({ entry, index, onOpen }) {
         {/* Square cover */}
         <div className="relative" style={{aspectRatio: "1/1"}}>
           {cover.type === "image" ? (
-            <img src={cover.src} alt="" className="w-full h-full object-cover" crossOrigin="anonymous" />
+            <img src={cover.src} alt="" className="w-full h-full object-cover" />
           ) : (
             <GeneratedCover entryType={cover.entryType} date={cover.date} />
           )}
@@ -918,8 +918,7 @@ function ScrapbookCollagePage({ entry }) {
               {item.type === "image" && (
                 <div style={{width: `${item.w}%`, minWidth: 60, padding: 3,
                   background: "white", borderRadius: 4, boxShadow: "0 3px 10px rgba(0,0,0,0.2)"}}>
-                  <img src={item.src} alt="" className="w-full block" style={{borderRadius: 2}}
-                    crossOrigin="anonymous" />
+                  <img src={item.src} alt="" className="w-full block" style={{borderRadius: 2}} />
                 </div>
               )}
               {item.type === "sticker" && (
@@ -973,7 +972,7 @@ function ScrapbookJournalPage({ entry }) {
           <div className="space-y-3 mt-4">
             {entry.images.map((src, i) => (
               <img key={i} src={src} alt="" className="w-full rounded-xl"
-                style={{boxShadow: "0 4px 14px rgba(0,0,0,0.1)"}} crossOrigin="anonymous" />
+                style={{boxShadow: "0 4px 14px rgba(0,0,0,0.1)"}} />
             ))}
           </div>
         )}
@@ -1055,7 +1054,6 @@ function ScrapbookCheckinPage({ entry }) {
         <div className="grid grid-cols-3 gap-2 mb-4">
           {entry.images.map((src, i) => (
             <img key={i} src={src} alt="" className="aspect-square object-cover rounded-xl"
-              crossOrigin="anonymous"
               style={{boxShadow: "0 2px 8px rgba(91,58,138,0.18)"}} />
           ))}
         </div>
@@ -1179,7 +1177,7 @@ function ComposePhotoModal({ onClose, onSave }) {
         <button onClick={() => fileInputRef.current?.click()}
           className="w-full aspect-square rounded-2xl overflow-hidden flex items-center justify-center mb-4 transition"
           style={{background: image ? "transparent" : "rgba(255,255,255,0.05)", border: image ? "none" : "2px dashed rgba(255,110,199,0.5)"}}>
-          {image ? <img src={image} alt="" className="w-full h-full object-cover" crossOrigin="anonymous" /> : (
+          {image ? <img src={image} alt="" className="w-full h-full object-cover" /> : (
             <div className="text-center">
               <ImageIcon className="w-10 h-10 mx-auto mb-2 text-pink-300" />
               <p style={{color: "#4a2e7a", fontFamily: "'VT323', monospace", fontSize: "15px", letterSpacing: "0.1em"}}>▸ tap to add photo</p>
@@ -1250,7 +1248,7 @@ function CoverPicker({ coverPhoto, setCoverPhoto, availableImages, entryType, da
                 border: selected ? "2px solid #ff6ec7" : "1px solid rgba(255,255,255,0.2)",
                 boxShadow: selected ? "0 0 12px rgba(255,110,199,0.5)" : "none",
               }}>
-              <img src={img} alt="" className="w-full h-full object-cover" crossOrigin="anonymous" />
+              <img src={img} alt="" className="w-full h-full object-cover" />
             </button>
           );
         })}
@@ -1733,7 +1731,7 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
                     setShowImagePicker(false);
                   }} className="aspect-square rounded-xl overflow-hidden transition hover:scale-105"
                     style={{boxShadow: "0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.15)"}}>
-                    <img src={src} alt="" className="w-full h-full object-cover" crossOrigin="anonymous" />
+                    <img src={src} alt="" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -2253,7 +2251,7 @@ function JournalEditor({ entry, onClose, onSave, onDelete, photoImages }) {
                 <div className="mt-5 space-y-3">
                   {images.map((src, i) => (
                     <div key={i} className="relative rounded-xl overflow-hidden group" style={{boxShadow: "0 4px 12px rgba(0,0,0,0.15)"}}>
-                      <img src={src} alt="" className="w-full block" crossOrigin="anonymous" />
+                      <img src={src} alt="" className="w-full block" />
                       <button onClick={() => removeImage(i)}
                         className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                         <X className="w-3.5 h-3.5 text-white" />
@@ -2284,7 +2282,7 @@ function JournalEditor({ entry, onClose, onSave, onDelete, photoImages }) {
                   <button key={i} onClick={() => addImage(src)}
                     className="aspect-square rounded-xl overflow-hidden transition hover:scale-105"
                     style={{boxShadow: "0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.15)"}}>
-                    <img src={src} alt="" className="w-full h-full object-cover" crossOrigin="anonymous" />
+                    <img src={src} alt="" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -2650,7 +2648,7 @@ function StepPhotos({ data, update, photoImages }) {
         <div className="grid grid-cols-3 gap-2 mb-4">
           {data.images.map((src, i) => (
             <div key={i} className="relative aspect-square rounded-xl overflow-hidden group">
-              <img src={src} alt="" className="w-full h-full object-cover" crossOrigin="anonymous" />
+              <img src={src} alt="" className="w-full h-full object-cover" />
               <button onClick={() => removeImg(i)}
                 className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/70 flex items-center justify-center">
                 <X className="w-3 h-3 text-white" />
@@ -2677,7 +2675,7 @@ function StepPhotos({ data, update, photoImages }) {
               <button key={i} onClick={() => update({ images: [...data.images, src] })}
                 className="aspect-square rounded-xl overflow-hidden transition hover:scale-105"
                 style={{boxShadow: "0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.15)"}}>
-                <img src={src} alt="" className="w-full h-full object-cover" crossOrigin="anonymous" />
+                <img src={src} alt="" className="w-full h-full object-cover" />
               </button>
             ))}
           </div>
@@ -2719,7 +2717,7 @@ function EntryViewer({ entry, onClose, onDelete, onEdit }) {
 function PhotoView({ entry, onDelete }) {
   return (
     <>
-      <img src={entry.image} alt="" className="w-full" crossOrigin="anonymous" />
+      <img src={entry.image} alt="" className="w-full" />
       <div className="p-5" style={{background: "linear-gradient(160deg, #f7d6ff 0%, #ffe6f5 50%, #ffb4de 100%)", backdropFilter: "blur(20px)"}}>
         <div className="flex items-center justify-between mb-3 text-xs" style={{color: "#5b3a8a"}}>
           <span style={{fontFamily: "'VT323', monospace", fontSize: "14px"}}>▸ {entry.date} · {entry.time}</span>
@@ -2756,7 +2754,7 @@ function CollageView({ entry, onEdit }) {
           }}>
             {item.type === "image" && (
               <div style={{width: `${item.w}%`, minWidth: 80, padding: 4, background: "white", borderRadius: 4, boxShadow: "0 4px 12px rgba(0,0,0,0.2)"}}>
-                <img src={item.src} alt="" className="w-full block" style={{borderRadius: 2}} crossOrigin="anonymous" />
+                <img src={item.src} alt="" className="w-full block" style={{borderRadius: 2}} />
               </div>
             )}
             {item.type === "sticker" && <div style={{fontSize: item.size, lineHeight: 1}}>{item.content}</div>}
@@ -2804,7 +2802,7 @@ function JournalView({ entry, onEdit }) {
         {entry.images?.length > 0 && (
           <div className="space-y-2 mt-4">
             {entry.images.map((src, i) => (
-              <img key={i} src={src} alt="" className="w-full rounded-lg" style={{boxShadow: "0 2px 8px rgba(0,0,0,0.1)"}} crossOrigin="anonymous" />
+              <img key={i} src={src} alt="" className="w-full rounded-lg" style={{boxShadow: "0 2px 8px rgba(0,0,0,0.1)"}} />
             ))}
           </div>
         )}
@@ -2884,7 +2882,7 @@ function CheckinView({ entry, onDelete }) { /* lighter view */
         <div className="grid grid-cols-3 gap-2 mb-5">
           {entry.images.map((src, i) => (
             <img key={i} src={src} alt="" className="aspect-square object-cover rounded-xl"
-              style={{boxShadow: "0 4px 12px rgba(91,58,138,0.25)"}} crossOrigin="anonymous" />
+              style={{boxShadow: "0 4px 12px rgba(91,58,138,0.25)"}} />
           ))}
         </div>
       )}
