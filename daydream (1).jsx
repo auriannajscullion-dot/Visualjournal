@@ -236,6 +236,7 @@ export default function App({ session }) {
     const existing = entriesRef.current.find(e => e.id === id);
     if (!existing) return;
     const merged = { ...existing, ...patch };
+    if (patch.snapshotUrl) console.log("[updateEntry] persisting snapshotUrl →", patch.snapshotUrl);
     setEntries(prev => prev.map(e => e.id === id ? merged : e));
     upsertEntry(merged, userId).catch(err => console.error("save failed", err));
   };
@@ -947,9 +948,9 @@ function ScrapbookCollagePage({ entry, onEdit }) {
             </>
           )}
           {onEdit && (
-            <button onClick={onEdit}
-              className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center"
-              style={{background: "rgba(0,0,0,0.35)", backdropFilter: "blur(6px)"}}>
+            <button onClick={e => { e.stopPropagation(); onEdit(); }}
+              className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full flex items-center justify-center"
+              style={{background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.25)"}}>
               <Pencil className="w-4 h-4 text-white" />
             </button>
           )}
@@ -1517,18 +1518,35 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   const collageImages = useMemo(() => localItems.filter(i => i.type === "image").map(i => i.src), [localItems]);
 
   const exportSnapshot = async () => {
-    if (!stageRef.current) return undefined;
+    if (!stageRef.current) {
+      console.warn("[snapshot] stageRef is null — skipping");
+      return undefined;
+    }
+    // Deselect so the Transformer handles don't appear in the capture.
+    // We need two rAF cycles to guarantee React-Konva has committed the change.
     setSelectedId(null);
-    await new Promise(r => setTimeout(r, 60));
-    const dataUrl = stageRef.current.toDataURL({ pixelRatio: 2, mimeType: "image/jpeg", quality: 0.9 });
-    return uploadCollageSnapshot(dataUrl, entry.id);
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    console.log("[snapshot] calling toDataURL on stage", stageRef.current.width(), "x", stageRef.current.height());
+    let dataUrl;
+    try {
+      dataUrl = stageRef.current.toDataURL({ pixelRatio: 2, mimeType: "image/jpeg", quality: 0.9 });
+    } catch (err) {
+      console.error("[snapshot] toDataURL failed — likely a CORS/canvas-taint error:", err);
+      throw err;
+    }
+    console.log("[snapshot] toDataURL succeeded, uploading…");
+    const url = await uploadCollageSnapshot(dataUrl, entry.id);
+    console.log("[snapshot] uploaded →", url);
+    return url;
   };
 
   const handleSave = async () => {
     setSaveStatus("saving");
     let snapshotUrl;
-    try { snapshotUrl = await exportSnapshot(); } catch (err) { console.error("snapshot failed", err); }
-    onUpdate({ items: localItems, strokes: localStrokes, caption: localCaption, ...(snapshotUrl ? { snapshotUrl } : {}) });
+    try { snapshotUrl = await exportSnapshot(); } catch (err) { console.error("[save] snapshot failed:", err); }
+    const payload = { items: localItems, strokes: localStrokes, caption: localCaption, ...(snapshotUrl ? { snapshotUrl } : {}) };
+    console.log("[save] onUpdate payload keys:", Object.keys(payload), "snapshotUrl:", snapshotUrl);
+    onUpdate(payload);
     setSaveStatus("saved");
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => setSaveStatus(null), 2000);
@@ -1536,8 +1554,10 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
 
   const handleClose = async () => {
     let snapshotUrl;
-    try { snapshotUrl = await exportSnapshot(); } catch (err) { console.error("snapshot failed", err); }
-    onUpdate({ items: localItems, strokes: localStrokes, caption: localCaption, ...(snapshotUrl ? { snapshotUrl } : {}) });
+    try { snapshotUrl = await exportSnapshot(); } catch (err) { console.error("[close] snapshot failed:", err); }
+    const payload = { items: localItems, strokes: localStrokes, caption: localCaption, ...(snapshotUrl ? { snapshotUrl } : {}) };
+    console.log("[close] onUpdate payload keys:", Object.keys(payload), "snapshotUrl:", snapshotUrl);
+    onUpdate(payload);
     onClose();
   };
 
@@ -2807,9 +2827,9 @@ function CollageView({ entry, onEdit }) {
           </>
         )}
         {onEdit && (
-          <button onClick={onEdit}
-            className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center"
-            style={{background: "rgba(0,0,0,0.35)", backdropFilter: "blur(6px)"}}>
+          <button onClick={e => { e.stopPropagation(); onEdit(); }}
+            className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full flex items-center justify-center"
+            style={{background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.25)"}}>
             <Pencil className="w-4 h-4 text-white" />
           </button>
         )}
