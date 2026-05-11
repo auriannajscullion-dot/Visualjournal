@@ -160,6 +160,25 @@ export async function uploadPhoto(file) {
   });
 }
 
+export async function uploadCollageSnapshot(dataUrl, entryId) {
+  return withAuthRetry(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+    if (!userId) throw new Error("not signed in");
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    const path = `${userId}/collage-snapshots/${entryId}.jpg`;
+    const { error } = await supabase.storage.from(BUCKET).upload(path, blob, {
+      cacheControl: "3600",
+      upsert: true,
+      contentType: "image/jpeg",
+    });
+    if (error) throw error;
+    const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+    return data.publicUrl;
+  });
+}
+
 // ------------------------------------------------------------
 // Auth helpers
 // ------------------------------------------------------------

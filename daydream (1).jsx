@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { Plus, Image as ImageIcon, Type, Pencil, Sparkles, X, Trash2, ChevronLeft, ChevronRight, Book, Grid3x3, Eraser, Heart, ClipboardCheck, FileText, Layers, Download, Filter, LogOut } from "lucide-react";
-import { fetchEntries, upsertEntry, deleteEntryById, uploadPhoto, signOut } from "./src/supabase.js";
+import { fetchEntries, upsertEntry, deleteEntryById, uploadPhoto, uploadCollageSnapshot, signOut } from "./src/supabase.js";
 import Konva from "konva";
 import { Stage, Layer, Image as KonvaImage, Text as KonvaText, Line as KonvaLine, Rect as KonvaRect, Circle as KonvaCircle, Transformer, Group as KonvaGroup } from "react-konva";
 
@@ -176,6 +176,7 @@ function getCoverPhoto(entry) {
   // Auto-pick an image from the entry
   if (entry.type === "photo") return { type: "image", src: entry.image };
   if (entry.type === "collage") {
+    if (entry.snapshotUrl) return { type: "image", src: entry.snapshotUrl };
     const firstImg = entry.items?.find(i => i.type === "image");
     if (firstImg) return { type: "image", src: firstImg.src };
   }
@@ -871,7 +872,7 @@ function ScrapbookPage({ entry, typeColor, TypeIcon, typeLabel, onEdit, onDelete
           For collages: minHeight 0 so flex can shrink this below content size,
           then pass the resolved height down to ScrapbookCollagePage. */}
       <div className="flex-1" style={isCollage ? {minHeight: 0, display: "flex", flexDirection: "column"} : {}}>
-        {entry.type === "collage" && <ScrapbookCollagePage entry={entry} />}
+        {entry.type === "collage" && <ScrapbookCollagePage entry={entry} onEdit={onEdit} />}
         {entry.type === "journal" && <ScrapbookJournalPage entry={entry} />}
         {entry.type === "checkin" && <ScrapbookCheckinPage entry={entry} />}
       </div>
@@ -891,7 +892,7 @@ function ScrapbookPage({ entry, typeColor, TypeIcon, typeLabel, onEdit, onDelete
 }
 
 // ── Collage page: full static canvas preview ─────────────────
-function ScrapbookCollagePage({ entry }) {
+function ScrapbookCollagePage({ entry, onEdit }) {
   return (
     <div className="px-4 pt-3 pb-2">
       <h2 className="mb-1 iridescent-text" style={{fontFamily: "'Pacifico', cursive", fontSize: "20px", lineHeight: 1.15}}>
@@ -910,35 +911,48 @@ function ScrapbookCollagePage({ entry }) {
           background: entry.bg || "#f0e8ff",
           boxShadow: "0 6px 24px rgba(80,40,130,0.2), inset 0 0 0 1px rgba(255,255,255,0.4)",
         }}>
-          {(entry.items || []).map(item => (
-            <div key={item.id} style={{
-              position: "absolute", left: `${item.x}%`, top: `${item.y}%`,
-              transform: `rotate(${item.rotation || 0}deg)`, pointerEvents: "none",
-            }}>
-              {item.type === "image" && (
-                <div style={{width: `${item.w}%`, minWidth: 60, padding: 3,
-                  background: "white", borderRadius: 4, boxShadow: "0 3px 10px rgba(0,0,0,0.2)"}}>
-                  <img src={item.src} alt="" className="w-full block" style={{borderRadius: 2}}
-                    crossOrigin="anonymous" />
+          {entry.snapshotUrl ? (
+            <img src={entry.snapshotUrl} alt="" className="w-full h-full object-cover" crossOrigin="anonymous" />
+          ) : (
+            <>
+              {(entry.items || []).map(item => (
+                <div key={item.id} style={{
+                  position: "absolute", left: `${item.x}%`, top: `${item.y}%`,
+                  transform: `rotate(${item.rotation || 0}deg)`, pointerEvents: "none",
+                }}>
+                  {item.type === "image" && (
+                    <div style={{width: `${item.w}%`, minWidth: 60, padding: 3,
+                      background: "white", borderRadius: 4, boxShadow: "0 3px 10px rgba(0,0,0,0.2)"}}>
+                      <img src={item.src} alt="" className="w-full block" style={{borderRadius: 2}}
+                        crossOrigin="anonymous" />
+                    </div>
+                  )}
+                  {item.type === "sticker" && (
+                    <div style={{fontSize: item.size, lineHeight: 1}}>{item.content}</div>
+                  )}
+                  {item.type === "text" && (
+                    <div style={{fontFamily: "'Caveat', cursive", fontSize: 22, color: item.color,
+                      maxWidth: 180, lineHeight: 1.2}}>{item.content}</div>
+                  )}
                 </div>
-              )}
-              {item.type === "sticker" && (
-                <div style={{fontSize: item.size, lineHeight: 1}}>{item.content}</div>
-              )}
-              {item.type === "text" && (
-                <div style={{fontFamily: "'Caveat', cursive", fontSize: 22, color: item.color,
-                  maxWidth: 180, lineHeight: 1.2}}>{item.content}</div>
-              )}
-            </div>
-          ))}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none"
-            viewBox="0 0 100 100" preserveAspectRatio="none">
-            {(entry.strokes || []).map(s => (
-              <polyline key={s.id} points={s.points.map(p => `${p.x},${p.y}`).join(" ")}
-                fill="none" stroke={s.color} strokeLinecap="round" strokeLinejoin="round"
-                vectorEffect="non-scaling-stroke" style={{strokeWidth: s.size}} />
-            ))}
-          </svg>
+              ))}
+              <svg className="absolute inset-0 w-full h-full pointer-events-none"
+                viewBox="0 0 100 100" preserveAspectRatio="none">
+                {(entry.strokes || []).map(s => (
+                  <polyline key={s.id} points={s.points.map(p => `${p.x},${p.y}`).join(" ")}
+                    fill="none" stroke={s.color} strokeLinecap="round" strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke" style={{strokeWidth: s.size}} />
+                ))}
+              </svg>
+            </>
+          )}
+          {onEdit && (
+            <button onClick={onEdit}
+              className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center"
+              style={{background: "rgba(0,0,0,0.35)", backdropFilter: "blur(6px)"}}>
+              <Pencil className="w-4 h-4 text-white" />
+            </button>
+          )}
         </div>
     </div>
   );
@@ -1502,16 +1516,28 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   // Images used in this collage (for cover picker)
   const collageImages = useMemo(() => localItems.filter(i => i.type === "image").map(i => i.src), [localItems]);
 
-  const handleSave = () => {
+  const exportSnapshot = async () => {
+    if (!stageRef.current) return undefined;
+    setSelectedId(null);
+    await new Promise(r => setTimeout(r, 60));
+    const dataUrl = stageRef.current.toDataURL({ pixelRatio: 2, mimeType: "image/jpeg", quality: 0.9 });
+    return uploadCollageSnapshot(dataUrl, entry.id);
+  };
+
+  const handleSave = async () => {
     setSaveStatus("saving");
-    onUpdate({ items: localItems, strokes: localStrokes, caption: localCaption });
+    let snapshotUrl;
+    try { snapshotUrl = await exportSnapshot(); } catch (err) { console.error("snapshot failed", err); }
+    onUpdate({ items: localItems, strokes: localStrokes, caption: localCaption, ...(snapshotUrl ? { snapshotUrl } : {}) });
     setSaveStatus("saved");
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => setSaveStatus(null), 2000);
   };
 
-  const handleClose = () => {
-    onUpdate({ items: localItems, strokes: localStrokes, caption: localCaption });
+  const handleClose = async () => {
+    let snapshotUrl;
+    try { snapshotUrl = await exportSnapshot(); } catch (err) { console.error("snapshot failed", err); }
+    onUpdate({ items: localItems, strokes: localStrokes, caption: localCaption, ...(snapshotUrl ? { snapshotUrl } : {}) });
     onClose();
   };
 
@@ -2749,31 +2775,44 @@ function CollageView({ entry, onEdit }) {
       {/* Static mini collage preview */}
       <div className="relative w-full rounded-xl overflow-hidden mb-4"
         style={{aspectRatio: "3/4", background: entry.bg, boxShadow: "0 10px 30px rgba(0,0,0,0.3)"}}>
-        {(entry.items || []).map(item => (
-          <div key={item.id} style={{
-            position: "absolute", left: `${item.x}%`, top: `${item.y}%`,
-            transform: `rotate(${item.rotation || 0}deg)`, pointerEvents: "none",
-          }}>
-            {item.type === "image" && (
-              <div style={{width: `${item.w}%`, minWidth: 80, padding: 4, background: "white", borderRadius: 4, boxShadow: "0 4px 12px rgba(0,0,0,0.2)"}}>
-                <img src={item.src} alt="" className="w-full block" style={{borderRadius: 2}} crossOrigin="anonymous" />
+        {entry.snapshotUrl ? (
+          <img src={entry.snapshotUrl} alt="" className="w-full h-full object-cover" crossOrigin="anonymous" />
+        ) : (
+          <>
+            {(entry.items || []).map(item => (
+              <div key={item.id} style={{
+                position: "absolute", left: `${item.x}%`, top: `${item.y}%`,
+                transform: `rotate(${item.rotation || 0}deg)`, pointerEvents: "none",
+              }}>
+                {item.type === "image" && (
+                  <div style={{width: `${item.w}%`, minWidth: 80, padding: 4, background: "white", borderRadius: 4, boxShadow: "0 4px 12px rgba(0,0,0,0.2)"}}>
+                    <img src={item.src} alt="" className="w-full block" style={{borderRadius: 2}} crossOrigin="anonymous" />
+                  </div>
+                )}
+                {item.type === "sticker" && <div style={{fontSize: item.size, lineHeight: 1}}>{item.content}</div>}
+                {item.type === "text" && (
+                  <div style={{fontFamily: "'Caveat', cursive", fontSize: 28, color: item.color, maxWidth: 200, lineHeight: 1.2}}>
+                    {item.content}
+                  </div>
+                )}
               </div>
-            )}
-            {item.type === "sticker" && <div style={{fontSize: item.size, lineHeight: 1}}>{item.content}</div>}
-            {item.type === "text" && (
-              <div style={{fontFamily: "'Caveat', cursive", fontSize: 28, color: item.color, maxWidth: 200, lineHeight: 1.2}}>
-                {item.content}
-              </div>
-            )}
-          </div>
-        ))}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
-          {(entry.strokes || []).map(s => (
-            <polyline key={s.id} points={s.points.map(p => `${p.x},${p.y}`).join(" ")}
-              fill="none" stroke={s.color} strokeLinecap="round" strokeLinejoin="round"
-              vectorEffect="non-scaling-stroke" style={{strokeWidth: s.size}} />
-          ))}
-        </svg>
+            ))}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
+              {(entry.strokes || []).map(s => (
+                <polyline key={s.id} points={s.points.map(p => `${p.x},${p.y}`).join(" ")}
+                  fill="none" stroke={s.color} strokeLinecap="round" strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke" style={{strokeWidth: s.size}} />
+              ))}
+            </svg>
+          </>
+        )}
+        {onEdit && (
+          <button onClick={onEdit}
+            className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center"
+            style={{background: "rgba(0,0,0,0.35)", backdropFilter: "blur(6px)"}}>
+            <Pencil className="w-4 h-4 text-white" />
+          </button>
+        )}
       </div>
       {entry.caption && <p className="mb-4" style={{color: "#2d1b4e"}}>{entry.caption}</p>}
       <button onClick={onEdit}
