@@ -656,7 +656,7 @@ function ScrapbookView({ entries, onOpen, onDelete }) {
       prevFirstId.current = firstId;
       goTo(0, -1);
     }
-  });
+  }, [firstId, goTo]);
 
   const goTo = useCallback((idx, direction = 1) => {
     const clamped = Math.max(0, Math.min(entries.length - 1, idx));
@@ -972,7 +972,7 @@ function ScrapbookJournalPage({ entry }) {
         {entry.images?.length > 0 && (
           <div className="space-y-3 mt-4">
             {entry.images.map((src, i) => (
-              <img key={i} src={src} alt="" className="w-full rounded-xl"
+              <img key={src || i} src={src} alt="" className="w-full rounded-xl"
                 style={{boxShadow: "0 4px 14px rgba(0,0,0,0.1)"}} crossOrigin="anonymous" />
             ))}
           </div>
@@ -1025,7 +1025,7 @@ function ScrapbookCheckinPage({ entry }) {
             fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase"}}>▸ vibe</p>
           <div className="flex flex-wrap gap-1.5">
             {entry.moods.map((m, i) => (
-              <span key={i} className="px-2 py-0.5 rounded-full text-xs"
+              <span key={m ?? i} className="px-2 py-0.5 rounded-full text-xs"
                 style={{background: "rgba(255,110,199,0.15)",
                   border: "1px solid rgba(255,110,199,0.4)", color: "#8a2a6a"}}>{m}</span>
             ))}
@@ -1042,7 +1042,7 @@ function ScrapbookCheckinPage({ entry }) {
           </p>
           <div className="flex flex-wrap gap-1.5">
             {entry.whimsy.map((w, i) => (
-              <span key={i} className="px-2 py-0.5 rounded-full text-xs"
+              <span key={w ?? i} className="px-2 py-0.5 rounded-full text-xs"
                 style={{background: "rgba(96,229,255,0.15)",
                   border: "1px solid rgba(44,143,181,0.4)", color: "#1f5f7a"}}>{w}</span>
             ))}
@@ -1054,7 +1054,7 @@ function ScrapbookCheckinPage({ entry }) {
       {entry.images?.length > 0 && (
         <div className="grid grid-cols-3 gap-2 mb-4">
           {entry.images.map((src, i) => (
-            <img key={i} src={src} alt="" className="aspect-square object-cover rounded-xl"
+            <img key={src || i} src={src} alt="" className="aspect-square object-cover rounded-xl"
               crossOrigin="anonymous"
               style={{boxShadow: "0 2px 8px rgba(91,58,138,0.18)"}} />
           ))}
@@ -1063,7 +1063,7 @@ function ScrapbookCheckinPage({ entry }) {
 
       {/* Text sections */}
       {sections.map((s, i) => (
-        <div key={i} className="mb-3"
+        <div key={s.label ?? i} className="mb-3"
           style={{borderLeft: `2px solid ${s.highlight ? "#ff6ec7" : "rgba(167,139,250,0.35)"}`,
             paddingLeft: 10}}>
           <p style={{color: "#6b4aa8", fontFamily: "'VT323', monospace", fontSize: "11px",
@@ -1382,11 +1382,15 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
     setSelectedId(null);
   }, [entry.id]);
 
-  // Debounced flush to parent — kept in ref so latest values are always sent
+  // Debounced flush to parent — both data and callback are kept in refs so the
+  // latest values are always sent without onUpdate needing to be a dep (which
+  // would reset the debounce timer on every parent re-render).
   const latestRef = useRef({ items: localItems, strokes: localStrokes, caption: localCaption });
   latestRef.current = { items: localItems, strokes: localStrokes, caption: localCaption };
+  const onUpdateRef = useRef(onUpdate);
+  onUpdateRef.current = onUpdate;
   useEffect(() => {
-    const t = setTimeout(() => onUpdate(latestRef.current), 400);
+    const t = setTimeout(() => onUpdateRef.current(latestRef.current), 400);
     return () => clearTimeout(t);
   }, [localItems, localStrokes, localCaption]);
 
