@@ -127,8 +127,8 @@ const PAGE_BGS = [
   "linear-gradient(135deg, #fff4e6 0%, #ffe6f5 100%)",
   "linear-gradient(135deg, #e6f9ff 0%, #f0e6ff 100%)",
   "linear-gradient(135deg, #ffe6f0 0%, #e6ffe8 100%)",
-  "linear-gradient(135deg, #4a2e7a 0%, #6b4aa8 100%)",
   "linear-gradient(135deg, #ffffff 0%, #ffe6f5 100%)",
+  "linear-gradient(135deg, #4a2e7a 0%, #6b4aa8 100%)", // dark bg — kept last so random default skips it
 ];
 
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -233,10 +233,10 @@ export default function App({ session }) {
   entriesRef.current = entries;
   const updateEntry = (id, patch) => {
     const existing = entriesRef.current.find(e => e.id === id);
-    if (!existing) return;
+    if (!existing) return Promise.resolve();
     const merged = { ...existing, ...patch };
     setEntries(prev => prev.map(e => e.id === id ? merged : e));
-    upsertEntry(merged, userId).catch(err => console.error("save failed", err));
+    return upsertEntry(merged, userId).catch(err => { console.error("save failed", err); throw err; });
   };
   const deleteEntry = (id) => {
     setEntries(prev => prev.filter(e => e.id !== id));
@@ -656,7 +656,7 @@ function ScrapbookView({ entries, onOpen, onDelete }) {
       prevFirstId.current = firstId;
       goTo(0, -1);
     }
-  });
+  }, [firstId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const goTo = useCallback((idx, direction = 1) => {
     const clamped = Math.max(0, Math.min(entries.length - 1, idx));
@@ -1502,12 +1502,16 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   // Images used in this collage (for cover picker)
   const collageImages = useMemo(() => localItems.filter(i => i.type === "image").map(i => i.src), [localItems]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaveStatus("saving");
-    onUpdate({ items: localItems, strokes: localStrokes, caption: localCaption });
-    setSaveStatus("saved");
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => setSaveStatus(null), 2000);
+    try {
+      await onUpdate({ items: localItems, strokes: localStrokes, caption: localCaption });
+      setSaveStatus("saved");
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => setSaveStatus(null), 2000);
+    } catch {
+      setSaveStatus(null);
+    }
   };
 
   const handleClose = () => {
