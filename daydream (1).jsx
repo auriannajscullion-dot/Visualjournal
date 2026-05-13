@@ -656,7 +656,7 @@ function ScrapbookView({ entries, onOpen, onDelete }) {
       prevFirstId.current = firstId;
       goTo(0, -1);
     }
-  });
+  }, [firstId, goTo]);
 
   const goTo = useCallback((idx, direction = 1) => {
     const clamped = Math.max(0, Math.min(entries.length - 1, idx));
@@ -1385,8 +1385,10 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
   // Debounced flush to parent — kept in ref so latest values are always sent
   const latestRef = useRef({ items: localItems, strokes: localStrokes, caption: localCaption });
   latestRef.current = { items: localItems, strokes: localStrokes, caption: localCaption };
+  const onUpdateRef = useRef(onUpdate);
+  onUpdateRef.current = onUpdate;
   useEffect(() => {
-    const t = setTimeout(() => onUpdate(latestRef.current), 400);
+    const t = setTimeout(() => onUpdateRef.current(latestRef.current), 400);
     return () => clearTimeout(t);
   }, [localItems, localStrokes, localCaption]);
 
