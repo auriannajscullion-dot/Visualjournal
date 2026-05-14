@@ -127,8 +127,8 @@ const PAGE_BGS = [
   "linear-gradient(135deg, #fff4e6 0%, #ffe6f5 100%)",
   "linear-gradient(135deg, #e6f9ff 0%, #f0e6ff 100%)",
   "linear-gradient(135deg, #ffe6f0 0%, #e6ffe8 100%)",
-  "linear-gradient(135deg, #4a2e7a 0%, #6b4aa8 100%)",
   "linear-gradient(135deg, #ffffff 0%, #ffe6f5 100%)",
+  "linear-gradient(135deg, #4a2e7a 0%, #6b4aa8 100%)", // dark bg — kept last so the random picker (length-1) skips it
 ];
 
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -656,7 +656,7 @@ function ScrapbookView({ entries, onOpen, onDelete }) {
       prevFirstId.current = firstId;
       goTo(0, -1);
     }
-  });
+  }, [firstId]); // goTo is declared below via useCallback; its identity changes only with entries.length, which always changes alongside firstId
 
   const goTo = useCallback((idx, direction = 1) => {
     const clamped = Math.max(0, Math.min(entries.length - 1, idx));
@@ -934,7 +934,7 @@ function ScrapbookCollagePage({ entry }) {
           <svg className="absolute inset-0 w-full h-full pointer-events-none"
             viewBox="0 0 100 100" preserveAspectRatio="none">
             {(entry.strokes || []).map(s => (
-              <polyline key={s.id} points={s.points.map(p => `${p.x},${p.y}`).join(" ")}
+              <polyline key={s.id} points={(s.points || []).map(p => `${p.x},${p.y}`).join(" ")}
                 fill="none" stroke={s.color} strokeLinecap="round" strokeLinejoin="round"
                 vectorEffect="non-scaling-stroke" style={{strokeWidth: s.size}} />
             ))}
@@ -2769,7 +2769,7 @@ function CollageView({ entry, onEdit }) {
         ))}
         <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
           {(entry.strokes || []).map(s => (
-            <polyline key={s.id} points={s.points.map(p => `${p.x},${p.y}`).join(" ")}
+            <polyline key={s.id} points={(s.points || []).map(p => `${p.x},${p.y}`).join(" ")}
               fill="none" stroke={s.color} strokeLinecap="round" strokeLinejoin="round"
               vectorEffect="non-scaling-stroke" style={{strokeWidth: s.size}} />
           ))}
