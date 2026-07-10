@@ -109,6 +109,25 @@ function getBrushDrawProps(brushId, color, size) {
   }
 }
 
+// ------------------------------------------------------------
+// Design space: collage pages are laid out against a reference
+// 600×800 (3:4) page. Item x/y/w are stored as percentages, and
+// every px-based property (sticker size, text size, stroke width)
+// is stored in "design units" = pixels on the 600-wide reference
+// page. Renderers multiply by (actualWidth / REF_W) so a collage
+// looks the same in the editor, the scrapbook, the entry viewer,
+// and on every device.
+// ------------------------------------------------------------
+const REF_W = 600;
+const REF_H = 800;
+const IMG_PAD = 6;        // white polaroid frame padding, design units
+const TEXT_FONT = 30;     // collage text item font size, design units
+const TEXT_WIDTH = 220;   // collage text item wrap width, design units
+
+// Kawaii stickers are stored as type:"image" items; this predicate keeps
+// them (and any other inline SVG art) out of the photo album / cover pickers.
+const isRealPhoto = (item) => !item.kawaii && !String(item.src || "").startsWith("data:image/svg");
+
 const MOODS = ["alive ✦","grounded","anxious","scattered","heavy","hopeful","tired","proud","meh","whimsical 🌀","creative","overwhelmed","connected","lonely","peaceful","restless"];
 
 const WHIMSY_ITEMS = [
@@ -176,7 +195,7 @@ function getCoverPhoto(entry) {
   // Auto-pick an image from the entry
   if (entry.type === "photo") return { type: "image", src: entry.image };
   if (entry.type === "collage") {
-    const firstImg = entry.items?.find(i => i.type === "image");
+    const firstImg = entry.items?.find(i => i.type === "image" && isRealPhoto(i));
     if (firstImg) return { type: "image", src: firstImg.src };
   }
   if (entry.type === "journal") {
@@ -247,12 +266,14 @@ export default function App({ session }) {
 
   const handleSignOut = async () => { await signOut(); };
 
-  // All photos available to scrapbook = photo entries + images in other entries
+  // All photos available to scrapbook = photo entries + images in other entries.
+  // Kawaii SVG stickers are stored as image items but are NOT photos — keep
+  // them out of the album grid and cover pickers.
   const photoImages = useMemo(() => {
     const out = [];
     for (const e of entries) {
       if (e.type === "photo") out.push(e.image);
-      if (e.type === "collage") for (const it of (e.items || [])) if (it.type === "image") out.push(it.src);
+      if (e.type === "collage") for (const it of (e.items || [])) if (it.type === "image" && isRealPhoto(it)) out.push(it.src);
       if (e.type === "journal" || e.type === "checkin") for (const img of (e.images || [])) out.push(img);
     }
     return [...new Set(out)];
@@ -260,6 +281,14 @@ export default function App({ session }) {
 
   // Scrapbook shows all non-photo entries
   const scrapbookEntries = entries.filter(e => e.type !== "photo");
+
+  // openEntry / editingScrapbookEntry are snapshots taken when a modal was
+  // opened. Always RENDER from the live entry in `entries`, otherwise edits
+  // made while a modal is open go stale — e.g. the collage settings modal
+  // used to re-initialize from the old snapshot and silently write the old
+  // title/background/cover back over changes saved moments earlier.
+  const liveOpenEntry = openEntry ? (entries.find(e => e.id === openEntry.id) ?? null) : null;
+  const liveEditingEntry = editingScrapbookEntry ? (entries.find(e => e.id === editingScrapbookEntry.id) ?? null) : null;
 
   return (
     <div className="min-h-screen w-full relative overflow-hidden"
@@ -323,35 +352,35 @@ export default function App({ session }) {
       {compose === "journal-new" && <JournalEditor entry={null} onClose={() => setCompose(null)} onSave={(e) => addEntry(e)} photoImages={photoImages} />}
       {compose === "checkin-new" && <CheckInFlow onClose={() => setCompose(null)} onSave={(e) => addEntry(e)} photoImages={photoImages} />}
 
-      {openEntry && (
+      {liveOpenEntry && (
         <EntryViewer
-          entry={openEntry}
+          entry={liveOpenEntry}
           onClose={() => setOpenEntry(null)}
-          onDelete={() => deleteEntry(openEntry.id)}
-          onEdit={() => { setEditingScrapbookEntry(openEntry); setOpenEntry(null); }}
+          onDelete={() => deleteEntry(liveOpenEntry.id)}
+          onEdit={() => { setEditingScrapbookEntry(liveOpenEntry); setOpenEntry(null); }}
         />
       )}
 
-      {editingScrapbookEntry && editingScrapbookEntry.type === "collage" && (
+      {liveEditingEntry && liveEditingEntry.type === "collage" && (
         <CollageEditor
-          entry={editingScrapbookEntry}
+          entry={liveEditingEntry}
           onClose={() => setEditingScrapbookEntry(null)}
-          onUpdate={(patch) => updateEntry(editingScrapbookEntry.id, patch)}
-          onDelete={() => deleteEntry(editingScrapbookEntry.id)}
+          onUpdate={(patch) => updateEntry(liveEditingEntry.id, patch)}
+          onDelete={() => deleteEntry(liveEditingEntry.id)}
           photoImages={photoImages}
         />
       )}
-      {editingScrapbookEntry && editingScrapbookEntry.type === "journal" && (
+      {liveEditingEntry && liveEditingEntry.type === "journal" && (
         <JournalEditor
-          entry={editingScrapbookEntry}
+          entry={liveEditingEntry}
           onClose={() => setEditingScrapbookEntry(null)}
-          onSave={(patch) => { updateEntry(editingScrapbookEntry.id, patch); setEditingScrapbookEntry(null); }}
-          onDelete={() => deleteEntry(editingScrapbookEntry.id)}
+          onSave={(patch) => { updateEntry(liveEditingEntry.id, patch); setEditingScrapbookEntry(null); }}
+          onDelete={() => deleteEntry(liveEditingEntry.id)}
           photoImages={photoImages}
         />
       )}
-      {editingScrapbookEntry && editingScrapbookEntry.type === "checkin" && (
-        <EntryViewer entry={editingScrapbookEntry} onClose={() => setEditingScrapbookEntry(null)} onDelete={() => deleteEntry(editingScrapbookEntry.id)} />
+      {liveEditingEntry && liveEditingEntry.type === "checkin" && (
+        <EntryViewer entry={liveEditingEntry} onClose={() => setEditingScrapbookEntry(null)} onDelete={() => deleteEntry(liveEditingEntry.id)} />
       )}
     </div>
   );
@@ -891,6 +920,149 @@ function ScrapbookPage({ entry, typeColor, TypeIcon, typeLabel, onEdit, onDelete
 }
 
 // ── Collage page: full static canvas preview ─────────────────
+// ============================================================
+// STATIC COLLAGE RENDERER — shared by the scrapbook page and the
+// entry viewer so a saved collage renders EXACTLY like the Konva
+// editor drew it: same top-left rotation pivot, same design-space
+// sizing, and brush-aware strokes.
+// ============================================================
+function useElementWidth() {
+  const ref = useRef(null);
+  const [w, setW] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => {
+      const width = el.getBoundingClientRect().width;
+      setW(prev => (Math.abs(prev - width) > 0.5 ? width : prev));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, w];
+}
+
+// One saved stroke → SVG, mirroring KonvaStrokeShape's per-brush visuals.
+// Coordinates are in design units (REF_W × REF_H viewBox), so widths and
+// offsets scale uniformly with the page.
+function StaticStroke({ stroke }) {
+  const brushId = stroke.brush || "pen";
+  const pts = stroke.points || [];
+  const sw = stroke.size || 4;
+  const color = stroke.color;
+  const xy = pts.map(p => [(p.x / 100) * REF_W, (p.y / 100) * REF_H]);
+  const ptsAttr = xy.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  const line = { fill: "none", stroke: color, strokeLinecap: "round", strokeLinejoin: "round" };
+
+  if (brushId === "glitter") {
+    return (
+      <g>
+        {pts.map((p, i) => (
+          <circle key={i}
+            cx={(p.x / 100) * REF_W + (_pr(i * 3) - 0.5) * 10}
+            cy={(p.y / 100) * REF_H + (_pr(i * 3 + 1) - 0.5) * 10}
+            r={2 + _pr(i * 3 + 2) * 4}
+            fill={GLITTER_COLORS[Math.floor(_pr(i) * GLITTER_COLORS.length)]} />
+        ))}
+      </g>
+    );
+  }
+  if (brushId === "chalk") {
+    const mk = (dx, amp) => pts.map((p, i) =>
+      `${((p.x / 100) * REF_W + dx).toFixed(1)},${((p.y / 100) * REF_H + (_pr(i * 11 + 3) - 0.5) * amp).toFixed(1)}`).join(" ");
+    return (
+      <g>
+        <polyline {...line} points={mk(0, 3)} strokeWidth={sw * 1.5} opacity={0.65} />
+        <polyline {...line} points={mk(2, 4)} strokeWidth={sw * 1.2} opacity={0.5} />
+        <polyline {...line} points={mk(-1.5, 2)} strokeWidth={sw} opacity={0.4} />
+      </g>
+    );
+  }
+  if (brushId === "neon") {
+    return (
+      <g>
+        <polyline {...line} points={ptsAttr} strokeWidth={sw * 3} opacity={0.5} filter="url(#dd-neon-glow)" />
+        <polyline {...line} points={ptsAttr} strokeWidth={sw} opacity={1} />
+      </g>
+    );
+  }
+  if (brushId === "brush") {
+    return (
+      <g>
+        {xy.slice(0, -1).map(([x1, y1], i) => {
+          const [x2, y2] = xy[i + 1];
+          const dist = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+          const w = Math.max(sw * 0.3, sw * 1.5 * (1 - Math.min(dist / 60, 0.7)));
+          return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2}
+            stroke={color} strokeWidth={w} strokeLinecap="round" />;
+        })}
+      </g>
+    );
+  }
+  if (brushId === "dotted")
+    return <polyline {...line} points={ptsAttr} strokeWidth={sw} opacity={0.9} strokeDasharray={`${sw}, ${sw * 3}`} />;
+  if (brushId === "marker")
+    return <polyline {...line} points={ptsAttr} strokeWidth={sw * 2} opacity={0.6} strokeLinecap="butt" />;
+  if (brushId === "highlighter")
+    return <polyline {...line} points={ptsAttr} strokeWidth={sw * 4} opacity={0.25} strokeLinecap="square" strokeLinejoin="miter" />;
+  if (brushId === "finetip")
+    return <polyline {...line} points={ptsAttr} strokeWidth={sw * 0.4} />;
+  // pen (default)
+  return <polyline {...line} points={ptsAttr} strokeWidth={sw} />;
+}
+
+// Fills its (relatively-positioned) parent and renders the saved items +
+// strokes. The parent supplies the page background / border-radius / aspect.
+function CollageStaticContent({ entry }) {
+  const [ref, width] = useElementWidth();
+  const k = width > 0 ? width / REF_W : 0;
+  return (
+    <div ref={ref} className="absolute inset-0 overflow-hidden">
+      {k > 0 && (entry.items || []).map(item => (
+        <div key={item.id} style={{
+          position: "absolute", left: `${item.x}%`, top: `${item.y}%`,
+          // Konva rotates around the node origin (top-left) — match it,
+          // otherwise rotated items land in a different place than in the editor.
+          transform: `rotate(${item.rotation || 0}deg)`,
+          transformOrigin: "top left",
+          pointerEvents: "none",
+          ...(item.type === "image" ? { width: `calc(${item.w || 35}% + ${2 * IMG_PAD * k}px)` } : {}),
+        }}>
+          {item.type === "image" && (
+            <div style={{padding: IMG_PAD * k, background: "white", borderRadius: 6 * k,
+              boxShadow: "0 6px 18px rgba(0,0,0,0.25)"}}>
+              <img src={item.src} alt="" className="w-full block" style={{borderRadius: 2 * k}}
+                crossOrigin="anonymous" />
+            </div>
+          )}
+          {item.type === "sticker" && (
+            <div style={{fontSize: (item.size || 56) * k, lineHeight: 1}}>{item.content}</div>
+          )}
+          {item.type === "text" && (
+            <div style={{fontFamily: "'Caveat', cursive", fontSize: TEXT_FONT * k, color: item.color,
+              width: TEXT_WIDTH * k, padding: 4 * k, lineHeight: 1.2,
+              whiteSpace: "pre-wrap", overflowWrap: "break-word",
+              textShadow: item.color === "#ffffff" ? "0 0 8px rgba(255,110,199,0.6)" : "none"}}>
+              {item.content}
+            </div>
+          )}
+        </div>
+      ))}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none"
+        viewBox={`0 0 ${REF_W} ${REF_H}`} preserveAspectRatio="none">
+        <defs>
+          <filter id="dd-neon-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="5" />
+          </filter>
+        </defs>
+        {(entry.strokes || []).map(s => <StaticStroke key={s.id} stroke={s} />)}
+      </svg>
+    </div>
+  );
+}
+
 function ScrapbookCollagePage({ entry }) {
   return (
     <div className="px-4 pt-3 pb-2">
@@ -902,44 +1074,17 @@ function ScrapbookCollagePage({ entry }) {
       )}
       <div className="relative rounded-2xl overflow-hidden"
         style={{
-          height: "calc(100vh - 300px)",
-          width: "auto",
+          // Width-driven sizing: the box keeps its 3:4 shape no matter what.
+          // (A fixed height + maxWidth used to squash the page on phones,
+          // shifting every %-positioned item away from where it was created.)
           aspectRatio: "3/4",
-          maxWidth: "100%",
+          width: "min(100%, calc((100vh - 300px) * 0.75))",
           margin: "0 auto",
           background: entry.bg || "#f0e8ff",
           boxShadow: "0 6px 24px rgba(80,40,130,0.2), inset 0 0 0 1px rgba(255,255,255,0.4)",
         }}>
-          {(entry.items || []).map(item => (
-            <div key={item.id} style={{
-              position: "absolute", left: `${item.x}%`, top: `${item.y}%`,
-              transform: `rotate(${item.rotation || 0}deg)`, pointerEvents: "none",
-            }}>
-              {item.type === "image" && (
-                <div style={{width: `${item.w}%`, minWidth: 60, padding: 3,
-                  background: "white", borderRadius: 4, boxShadow: "0 3px 10px rgba(0,0,0,0.2)"}}>
-                  <img src={item.src} alt="" className="w-full block" style={{borderRadius: 2}}
-                    crossOrigin="anonymous" />
-                </div>
-              )}
-              {item.type === "sticker" && (
-                <div style={{fontSize: item.size, lineHeight: 1}}>{item.content}</div>
-              )}
-              {item.type === "text" && (
-                <div style={{fontFamily: "'Caveat', cursive", fontSize: 22, color: item.color,
-                  maxWidth: 180, lineHeight: 1.2}}>{item.content}</div>
-              )}
-            </div>
-          ))}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none"
-            viewBox="0 0 100 100" preserveAspectRatio="none">
-            {(entry.strokes || []).map(s => (
-              <polyline key={s.id} points={(s.points || []).map(p => `${p.x},${p.y}`).join(" ")}
-                fill="none" stroke={s.color} strokeLinecap="round" strokeLinejoin="round"
-                vectorEffect="non-scaling-stroke" style={{strokeWidth: s.size}} />
-            ))}
-          </svg>
-        </div>
+        <CollageStaticContent entry={entry} />
+      </div>
     </div>
   );
 }
@@ -1382,13 +1527,21 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
     setSelectedId(null);
   }, [entry.id]);
 
-  // Debounced flush to parent — kept in ref so latest values are always sent
+  // Debounced flush to parent — kept in ref so latest values are always sent.
+  // The first run (mount) is skipped: nothing changed yet, and flushing there
+  // caused a pointless DB write every time the editor was opened.
   const latestRef = useRef({ items: localItems, strokes: localStrokes, caption: localCaption });
   latestRef.current = { items: localItems, strokes: localStrokes, caption: localCaption };
+  const firstFlushRef = useRef(true);
   useEffect(() => {
+    if (firstFlushRef.current) { firstFlushRef.current = false; return; }
     const t = setTimeout(() => onUpdate(latestRef.current), 400);
     return () => clearTimeout(t);
   }, [localItems, localStrokes, localCaption]);
+
+  // px per design unit — every px-based item property is stored relative to
+  // the REF_W-wide reference page so collages render identically everywhere.
+  const designScale = stageSize.w > 0 ? stageSize.w / REF_W : 1;
 
   const addItem = (item) => setLocalItems(prev => [...prev, { id: uid(), ...item }]);
   const updateItem = (id, updates) => setLocalItems(prev => prev.map(it => it.id === id ? { ...it, ...updates } : it));
@@ -1431,7 +1584,8 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
         eraseAt((pos.x / sW) * 100, (pos.y / sH) * 100);
         return;
       }
-      const props = getBrushDrawProps(brushType, penColor, penSize);
+      const k = stageSizeRef.current.w > 0 ? stageSizeRef.current.w / REF_W : 1;
+      const props = getBrushDrawProps(brushType, penColor, penSize * k);
       const line = new Konva.Line({ ...props, points: [pos.x, pos.y, pos.x, pos.y], listening: false });
       currentStrokeMetaRef.current = { id: uid(), color: penColor, size: penSize, brush: brushType };
       activeLineRef.current = line;
@@ -1499,8 +1653,10 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
     }
   };
 
-  // Images used in this collage (for cover picker)
-  const collageImages = useMemo(() => localItems.filter(i => i.type === "image").map(i => i.src), [localItems]);
+  // Photos used in this collage (for cover picker) — kawaii stickers excluded
+  const collageImages = useMemo(
+    () => localItems.filter(i => i.type === "image" && isRealPhoto(i)).map(i => i.src),
+    [localItems]);
 
   const handleSave = () => {
     setSaveStatus("saving");
@@ -1591,6 +1747,7 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
                     <KonvaCollageItem
                       key={item.id} item={item}
                       stageW={stageSize.w} stageH={stageSize.h}
+                      designScale={designScale}
                       isSelected={selectedId === item.id}
                       onSelect={() => { if (!tool) setSelectedId(item.id); }}
                       onUpdate={(u) => updateItem(item.id, u)}
@@ -1601,7 +1758,7 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
                       }} />
                   ))}
                   {localStrokes.map(s => (
-                    <KonvaStrokeShape key={s.id} stroke={s} stageW={stageSize.w} stageH={stageSize.h} />
+                    <KonvaStrokeShape key={s.id} stroke={s} stageW={stageSize.w} stageH={stageSize.h} designScale={designScale} />
                   ))}
                   <Transformer ref={trRef}
                     rotateEnabled={true}
@@ -1772,7 +1929,7 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
               <div className="grid grid-cols-5 gap-2">
                 {KAWAII_STICKERS.map(sticker => (
                   <button key={sticker.id} onClick={() => {
-                    addItem({ type: "image", src: sticker.src, x: rand(15, 60), y: rand(15, 60), w: rand(22, 38), rotation: rand(-15, 15) });
+                    addItem({ type: "image", kawaii: true, src: sticker.src, x: rand(15, 60), y: rand(15, 60), w: rand(22, 38), rotation: rand(-15, 15) });
                     setShowStickers(false);
                   }}
                     className="aspect-square rounded-xl overflow-hidden transition hover:scale-110 flex items-center justify-center"
@@ -1848,7 +2005,7 @@ function CollageEditor({ entry, onClose, onUpdate, onDelete, photoImages }) {
 
 // Renders one collage item as a Konva node (image, sticker, or text).
 // onNodeRef receives the underlying Konva node so the parent can attach a Transformer.
-function KonvaCollageItem({ item, stageW, stageH, isSelected, onSelect, onUpdate, tool, onNodeRef }) {
+function KonvaCollageItem({ item, stageW, stageH, designScale = 1, isSelected, onSelect, onUpdate, tool, onNodeRef }) {
   const x = (item.x / 100) * stageW;
   const y = (item.y / 100) * stageH;
   const rot = item.rotation || 0;
@@ -1863,7 +2020,7 @@ function KonvaCollageItem({ item, stageW, stageH, isSelected, onSelect, onUpdate
   if (item.type === "image") {
     return (
       <KonvaImageCard
-        item={item} stageW={stageW} stageH={stageH}
+        item={item} stageW={stageW} stageH={stageH} designScale={designScale}
         x={x} y={y} rot={rot} draggable={draggable} isSelected={isSelected}
         onDragEnd={handleDragEnd} onClick={handleTap} onTap={handleTap}
         onUpdate={onUpdate} onNodeRef={onNodeRef}
@@ -1876,7 +2033,7 @@ function KonvaCollageItem({ item, stageW, stageH, isSelected, onSelect, onUpdate
       <KonvaText
         ref={onNodeRef}
         x={x} y={y} text={item.content}
-        fontSize={item.size || 56}
+        fontSize={(item.size || 56) * designScale}
         rotation={rot} draggable={draggable}
         onDragEnd={handleDragEnd} onClick={handleTap} onTap={handleTap}
         shadowBlur={isSelected ? 12 : 4}
@@ -1902,8 +2059,8 @@ function KonvaCollageItem({ item, stageW, stageH, isSelected, onSelect, onUpdate
     <KonvaText
       ref={onNodeRef}
       x={x} y={y} text={item.content}
-      fontSize={30} fontFamily="'Caveat', cursive" fill={item.color}
-      width={220} wrap="word" lineHeight={1.2} padding={4}
+      fontSize={TEXT_FONT * designScale} fontFamily="'Caveat', cursive" fill={item.color}
+      width={TEXT_WIDTH * designScale} wrap="word" lineHeight={1.2} padding={4 * designScale}
       rotation={rot} draggable={draggable}
       onDragEnd={handleDragEnd} onClick={handleTap} onTap={handleTap}
       shadowBlur={isSelected || item.color === "#ffffff" ? 8 : 0}
@@ -1923,7 +2080,7 @@ function KonvaCollageItem({ item, stageW, stageH, isSelected, onSelect, onUpdate
 }
 
 // Image item: white card frame rendered with KonvaRect + KonvaImage inside a KonvaGroup.
-function KonvaImageCard({ item, stageW, stageH, x, y, rot, draggable, isSelected, onDragEnd, onClick, onTap, onUpdate, onNodeRef }) {
+function KonvaImageCard({ item, stageW, stageH, designScale = 1, x, y, rot, draggable, isSelected, onDragEnd, onClick, onTap, onUpdate, onNodeRef }) {
   const { img, error } = useKonvaImage(item.src);
   const groupRef = useRef(null);
 
@@ -1932,7 +2089,7 @@ function KonvaImageCard({ item, stageW, stageH, x, y, rot, draggable, isSelected
     return () => onNodeRef(null);
   }, []); // mount/unmount only — component is stable while item exists (key=item.id)
 
-  const PAD = 6;
+  const PAD = IMG_PAD * designScale;
   const w = ((item.w || 35) / 100) * stageW;
   const aspect = img ? img.naturalWidth / img.naturalHeight : 4 / 3;
   const h = w / aspect;
@@ -1957,7 +2114,7 @@ function KonvaImageCard({ item, stageW, stageH, x, y, rot, draggable, isSelected
     >
       <KonvaRect
         x={0} y={0} width={w + PAD * 2} height={h + PAD * 2}
-        fill="white" cornerRadius={6}
+        fill="white" cornerRadius={6 * designScale}
         shadowBlur={isSelected ? 20 : 18}
         shadowColor={isSelected ? "#ff6ec7" : "rgba(0,0,0,0.25)"}
         shadowOffsetY={isSelected ? 0 : 6}
@@ -1965,13 +2122,13 @@ function KonvaImageCard({ item, stageW, stageH, x, y, rot, draggable, isSelected
         strokeWidth={isSelected ? 2 : 0}
       />
       {img ? (
-        <KonvaImage image={img} x={PAD} y={PAD} width={w} height={h} cornerRadius={2} />
+        <KonvaImage image={img} x={PAD} y={PAD} width={w} height={h} cornerRadius={2 * designScale} />
       ) : error ? (
         // Broken-image placeholder
-        <KonvaRect x={PAD} y={PAD} width={w} height={h} fill="#f5e0ff" cornerRadius={2} />
+        <KonvaRect x={PAD} y={PAD} width={w} height={h} fill="#f5e0ff" cornerRadius={2 * designScale} />
       ) : (
         // Loading placeholder
-        <KonvaRect x={PAD} y={PAD} width={w} height={h} fill="#ede0ff" cornerRadius={2} />
+        <KonvaRect x={PAD} y={PAD} width={w} height={h} fill="#ede0ff" cornerRadius={2 * designScale} />
       )}
     </KonvaGroup>
   );
@@ -1979,10 +2136,10 @@ function KonvaImageCard({ item, stageW, stageH, x, y, rot, draggable, isSelected
 
 // Renders a completed stroke using the correct visual for each brush type.
 const GLITTER_COLORS = ["#FF6EC7","#A78BFA","#60E5FF","#FFD166","#B8FF6B","#FFFFFF"];
-function KonvaStrokeShape({ stroke, stageW, stageH }) {
+function KonvaStrokeShape({ stroke, stageW, stageH, designScale = 1 }) {
   const brushId = stroke.brush || "pen";
   const pts = stroke.points || [];
-  const sw = stroke.size || 4;
+  const sw = (stroke.size || 4) * designScale; // stored size is in design units
   const color = stroke.color;
 
   const pxPoints = useMemo(
@@ -1994,12 +2151,12 @@ function KonvaStrokeShape({ stroke, stageW, stageH }) {
   const glitterData = useMemo(() => {
     if (brushId !== "glitter") return null;
     return pts.map((p, i) => ({
-      x: ((p.x / 100) * stageW) + (_pr(i * 3) - 0.5) * 10,
-      y: ((p.y / 100) * stageH) + (_pr(i * 3 + 1) - 0.5) * 10,
-      r: 2 + _pr(i * 3 + 2) * 4,
+      x: ((p.x / 100) * stageW) + (_pr(i * 3) - 0.5) * 10 * designScale,
+      y: ((p.y / 100) * stageH) + (_pr(i * 3 + 1) - 0.5) * 10 * designScale,
+      r: (2 + _pr(i * 3 + 2) * 4) * designScale,
       color: GLITTER_COLORS[Math.floor(_pr(i) * GLITTER_COLORS.length)],
     }));
-  }, [brushId, pts, stageW, stageH]);
+  }, [brushId, pts, stageW, stageH, designScale]);
 
   if (brushId === "glitter" && glitterData) {
     return (
@@ -2014,8 +2171,8 @@ function KonvaStrokeShape({ stroke, stageW, stageH }) {
   if (brushId === "chalk") {
     const mkPts = (dx, noiseAmp) =>
       pts.flatMap((p, i) => [
-        (p.x / 100) * stageW + dx,
-        (p.y / 100) * stageH + (_pr(i * 11 + 3) - 0.5) * noiseAmp,
+        (p.x / 100) * stageW + dx * designScale,
+        (p.y / 100) * stageH + (_pr(i * 11 + 3) - 0.5) * noiseAmp * designScale,
       ]);
     const base = { stroke: color, lineCap: "round", lineJoin: "round", tension: 0.3, listening: false };
     return (
@@ -2032,7 +2189,7 @@ function KonvaStrokeShape({ stroke, stageW, stageH }) {
       <KonvaGroup listening={false}>
         <KonvaLine points={pxPoints} stroke={color} strokeWidth={sw * 3}
           lineCap="round" lineJoin="round" tension={0.5} opacity={0.5}
-          shadowColor={color} shadowBlur={15} shadowEnabled listening={false} />
+          shadowColor={color} shadowBlur={15 * designScale} shadowEnabled listening={false} />
         <KonvaLine points={pxPoints} stroke={color} strokeWidth={sw}
           lineCap="round" lineJoin="round" tension={0.5} opacity={1} listening={false} />
       </KonvaGroup>
@@ -2047,7 +2204,7 @@ function KonvaStrokeShape({ stroke, stageW, stageH }) {
         {pxPairs.slice(0, -1).map(([x1, y1], i) => {
           const [x2, y2] = pxPairs[i + 1];
           const dist = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-          const w = Math.max(sw * 0.3, sw * 1.5 * (1 - Math.min(dist / 60, 0.7)));
+          const w = Math.max(sw * 0.3, sw * 1.5 * (1 - Math.min(dist / (60 * designScale), 0.7)));
           return <KonvaLine key={i} points={[x1, y1, x2, y2]} stroke={color}
             strokeWidth={w} lineCap="round" lineJoin="round" listening={false} />;
         })}
@@ -2746,34 +2903,10 @@ function CollageView({ entry, onEdit }) {
       <p className="mb-4" style={{color: "#5b3a8a", fontFamily: "'VT323', monospace", fontSize: "13px", letterSpacing: "0.15em"}}>
         ▸ {entry.date} · {entry.time}
       </p>
-      {/* Static mini collage preview */}
+      {/* Static mini collage preview — same renderer as the scrapbook page */}
       <div className="relative w-full rounded-xl overflow-hidden mb-4"
         style={{aspectRatio: "3/4", background: entry.bg, boxShadow: "0 10px 30px rgba(0,0,0,0.3)"}}>
-        {(entry.items || []).map(item => (
-          <div key={item.id} style={{
-            position: "absolute", left: `${item.x}%`, top: `${item.y}%`,
-            transform: `rotate(${item.rotation || 0}deg)`, pointerEvents: "none",
-          }}>
-            {item.type === "image" && (
-              <div style={{width: `${item.w}%`, minWidth: 80, padding: 4, background: "white", borderRadius: 4, boxShadow: "0 4px 12px rgba(0,0,0,0.2)"}}>
-                <img src={item.src} alt="" className="w-full block" style={{borderRadius: 2}} crossOrigin="anonymous" />
-              </div>
-            )}
-            {item.type === "sticker" && <div style={{fontSize: item.size, lineHeight: 1}}>{item.content}</div>}
-            {item.type === "text" && (
-              <div style={{fontFamily: "'Caveat', cursive", fontSize: 28, color: item.color, maxWidth: 200, lineHeight: 1.2}}>
-                {item.content}
-              </div>
-            )}
-          </div>
-        ))}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
-          {(entry.strokes || []).map(s => (
-            <polyline key={s.id} points={(s.points || []).map(p => `${p.x},${p.y}`).join(" ")}
-              fill="none" stroke={s.color} strokeLinecap="round" strokeLinejoin="round"
-              vectorEffect="non-scaling-stroke" style={{strokeWidth: s.size}} />
-          ))}
-        </svg>
+        <CollageStaticContent entry={entry} />
       </div>
       {entry.caption && <p className="mb-4" style={{color: "#2d1b4e"}}>{entry.caption}</p>}
       <button onClick={onEdit}

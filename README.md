@@ -231,6 +231,14 @@ public/
 
 ---
 
+## versioning
+
+Working branches are numbered `V1.XX` (one branch = one version, incremented by 1
+each time). The full rule + branch↔version table lives in [`VERSIONS.md`](VERSIONS.md).
+Current: **V1.24**.
+
+---
+
 ## credits
 
 - design direction: iridescent pastel synthwave + anime lofi + kawaii maximalism
