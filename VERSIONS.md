@@ -29,5 +29,6 @@ Look at the highest `XX` in the table below and add 1. That's it.
 |---------|-----------------------------------|------------|---------|
 | V1.23   | `claude/optimistic-franklin-rthFy`| 2026-07    | Runaway useEffect fix, random bg fix, null-stroke crash fix, kawaii sticker tab, 10 brush types, book-style scrapbook + TOC, collage preview fixes |
 | V1.24   | `claude/pensive-pasteur-7vxgzh`   | 2026-07-10 | "Saved ≠ created" fixes: match editor/view rotation pivot, brush-aware saved strokes, design-unit scaling across devices, un-squashed scrapbook page, settings modal no longer reverts saved changes, kawaii stickers kept out of the photo album |
+| V1.25   | `claude/v1.25-app-improvements-brainstorm` | 2026-07-12 | IMPROVEMENTS.md — extensive code + UX future-upgrades brainstorm from a full-codebase audit (docs only, no app code changes) |
 
 *(Versions before V1.23 predate this file; their branch names were not recorded.)*

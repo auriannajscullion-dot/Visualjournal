@@ -136,6 +136,8 @@ Data is persisted under the `localStorage` key `daydream_v4`.
 
 ## roadmap to a real app
 
+The long-form wishlist — ~95 possible future upgrades, code side and UX side, with effort tags — lives in [`IMPROVEMENTS.md`](IMPROVEMENTS.md).
+
 Rough order of things to do when moving from "artifact prototype" to "app that runs on my phone":
 
 ### phase 1 — get it running locally
@@ -235,7 +237,7 @@ public/
 
 Working branches are numbered `V1.XX` (one branch = one version, incremented by 1
 each time). The full rule + branch↔version table lives in [`VERSIONS.md`](VERSIONS.md).
-Current: **V1.24**.
+Current: **V1.25**.
 
 ---
 
