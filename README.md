@@ -136,6 +136,8 @@ Data is persisted under the `localStorage` key `daydream_v4`.
 
 ## roadmap to a real app
 
+The long-form wishlist — ~95 possible future upgrades, code side and UX side, with effort tags — lives in [`IMPROVEMENTS.md`](IMPROVEMENTS.md).
+
 Rough order of things to do when moving from "artifact prototype" to "app that runs on my phone":
 
 ### phase 1 — get it running locally
@@ -228,6 +230,14 @@ public/
 - **Check-in is 7 steps, not one long form.** One question at a time feels meditative rather than overwhelming. Progress dots tell you how close to the end you are.
 - **Dark app, light scrapbook pages.** The app chrome is synthwave-dreamy, but scrapbook pages themselves are mostly light/cream so photos and handwritten text pop. (One dark page background option exists for moody pages.)
 - **"Artist of Life" is the fixed tagline.** Not up for debate.
+
+---
+
+## versioning
+
+Working branches are numbered `V1.XX` (one branch = one version, incremented by 1
+each time). The full rule + branch↔version table lives in [`VERSIONS.md`](VERSIONS.md).
+Current: **V1.25**.
 
 ---
 
